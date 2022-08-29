@@ -1,53 +1,58 @@
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
-import yaml
+import pandas as pd
+from data_plot_class import DataPlotHelper
 
-data_info = yaml.load()
+path_folder = 'data/icra2022/2-exp-ImpLoop3-NoAdaptation-PARTIAL-RESULTS-DONT-EDIT/'
+data_info = pd.read_csv(path_folder+'data_info.csv')
 
-def get_data(file_handler, key, i_init, i_fin):
-    return np.array(file_handler.get(key))[i_init:i_fin]
+dh = DataPlotHelper(path_folder)
 
-# files_names = ['empty.mat', 'opt.mat', 'opt_kmp.mat', 'opt_kmp_vic.mat']
-# i_initial = [34675, 38630, 39352, 40832]
+Z_AXIS = 2
+COLORS = ['Green', 'Blue']
+TRIALS_IDXS = [1, 2, 3]
+HEIGHTS = [27]
 
-folder_name = '0-exp-ImpLoop30-Height27/'
+params = {  
+    'vic': True,
+    'color': 'Blue',
+    'trial_idx': 3,
+    'height': 27,
+    'impedance_loop': 30,
+    'online_adaptation': False,
+    'i_initial': 0,
+    'i_final': -1,
+    'data_to_plot': 'EE_twist_d',
+    }
 
-files_names = ['opt_kmp_1.mat', 'opt_kmp_vic_1.mat']
-i_initial = [39320, 40800]
-t_exp = 2.0
-freq_exp = 0.001
-n_points = int(t_exp/freq_exp)
-i_final = [i+n_points for i in i_initial]
-y_lim_ft = [-5, 30]
-x_lim = [0, t_exp]
-y_lim_twist = [-1.5, 0.5]
+fig, ax = dh.plot_single(params, data_info, axis=Z_AXIS)
+plt.show()
 
-n_plots = files_names.__len__()
 
 # individual plots
-fig, ax = plt.subplots(n_plots,1) 
-for i, file_name, i_init, i_fin in zip(range(n_plots), files_names, i_initial, i_final):
-    i_init *= 0
-    i_fin = -1
-    f = h5py.File(folder_name+file_name, 'r')
+# fig, ax = plt.subplots(n_plots,1) 
+# for i, file_name, i_init, i_fin in zip(range(n_plots), files_names, i_initial, i_final):
+#     i_init *= 0
+#     i_fin = -1
+#     f = h5py.File(folder_name+file_name, 'r')
 
-    print("keys: ", f.keys())
+#     print("keys: ", f.keys())
 
-    # K = get_data(f, 'K', i_init, i_fin)
-    FT = get_data(f, 'FT_ati', i_init, i_fin)
-    EE_twist = get_data(f, 'EE_twist', i_init, i_fin)
-    time = get_data(f, 'time', i_init, i_fin)
+#     # K = get_data(f, 'K', i_init, i_fin)
+#     FT = get_data(f, 'FT_ati', i_init, i_fin)
+#     EE_twist = get_data(f, 'EE_twist', i_init, i_fin)
+#     time = get_data(f, 'time', i_init, i_fin)
 
 
-    # ax[i].plot(time-time[0], FT[:, 2], linewidth=3)
-    ax[i].plot(FT[:, 2], linewidth=3)
-    ax[i].plot(np.sqrt(np.mean(FT[:, 2]**2))*np.ones(n_points), 'k--')
-    # ax[i].plot(time-time[0], EE_twist[:, 2])
-    # ax[i].set_ylim(y_lim_ft)
-    # ax[i].set_xlim(x_lim)
-    ax[i].set_title(file_name)
-    ax[i].grid()
+#     # ax[i].plot(time-time[0], FT[:, 2], linewidth=3)
+#     ax[i].plot(FT[:, 2], linewidth=3)
+#     ax[i].plot(np.sqrt(np.mean(FT[:, 2]**2))*np.ones(n_points), 'k--')
+#     # ax[i].plot(time-time[0], EE_twist[:, 2])
+#     # ax[i].set_ylim(y_lim_ft)
+#     # ax[i].set_xlim(x_lim)
+#     ax[i].set_title(file_name)
+#     ax[i].grid()
 
 plt.show()
 

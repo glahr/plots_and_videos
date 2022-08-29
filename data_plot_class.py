@@ -1,4 +1,3 @@
-from distutils.util import copydir_run_2to3
 from tkinter import N
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,3 +62,25 @@ class DataPlotHelper:
         plt.plot(data)
         if show:
             plt.show()
+    
+    def get_idx_from_file(self, params, data_info, idx_name=''):
+        if idx_name == '':
+            print('IDX EMPTY')
+            return 0
+        experiment_name = 'opt_kmp'
+        experiment_name += '_vic' if params['vic'] else ''
+        experiment_name += '_' + str(params['trial_idx'])
+
+        idx = data_info.loc[(data_info['experiment_name'] == experiment_name) &
+                                    (data_info['color'] == params['color']) &
+                                    (data_info['height'] == params['height']), idx_name].values
+        return idx
+
+    
+    def plot_single(self, params, data_info,axis=2):
+        idx_start = self.get_idx_from_file(params, data_info, 'idx_start')[0]
+        idx_end = self.get_idx_from_file(params, data_info, 'idx_end')[0]
+        data = self.get_data(params)
+        fig, ax = plt.subplots(1)
+        ax.plot(data[idx_start:idx_end,axis])
+        return fig, ax
