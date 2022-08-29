@@ -1,27 +1,51 @@
+from distutils.util import copydir_run_2to3
 from tkinter import N
 import matplotlib.pyplot as plt
 import numpy as np
 import h5py
 
+FORCE_THRESHOLD = 3
+
 class DataPlotHelper:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, path_folder='') -> None:
+        self.path_folder = path_folder
+        self.idx_movement_starts = 0
+    
+    def copy_dict(self, my_dict):
+        return {key: value for key, value in my_dict.items()}
 
-    def get_idx_movement_start(self, params):
-        params['data_to_plot'] = 'EE_twist_d'
-        return np.nonzero(self.get_data(params))[0][0] 
+    def get_idx_movement_starts(self, params):
+        aux_params = self.copy_dict(params)
+        aux_params['data_to_plot'] = 'EE_twist_d'
+        data_aux = self.get_data(aux_params)
+        idx = np.nonzero(data_aux)[0][0]
+        for i in range(idx, len(data_aux)):
+            if abs(data_aux[i][2]) >= 1e-5:
+                break
+            idx += 1
+        idx -= 1
+        self.idx_movement_starts = idx
+        return idx
         
+    def get_idx_movement_ends(self, params, seconds=1.5):
+        return self.idx_movement_starts + int(1000*seconds)
 
-    def get_idx_contact_start(self):
-        pass
+    def get_idx_contact_starts(self, params):
+        aux_params = self.copy_dict(params)
+        aux_params['data_to_plot'] = 'FT_ati'
+        data_aux = self.get_data(aux_params)
+        idx_forces_above_threshold = np.where(data_aux[self.idx_movement_starts:, 2]> FORCE_THRESHOLD)[0]  # this [0] gets only the indexes from np.where return
+        idx_forces_above_threshold -= 5
+        return idx_forces_above_threshold[0]
 
-    def get_data(self, params={}, path_folder=''):
+
+    def get_data(self, params={}):
         if not params:
             print('EMTPY PARAMS')
             return 0
         
         # folder_name = path_folder + '0-exp-' if params['height'] == 27 else '1-exp-'
-        folder_name = path_folder + '0-exp-' + params['color'] + '-Height' + str(params['height']) + '/'
+        folder_name = self.path_folder + params['color'] + '-Height' + str(params['height']) + '/'
         # folder_name += 'ImpLoop' + str(params['impedance_loop']) + '-'
         # folder_name += 'Height' + str(params['height']) + '/'
         
@@ -30,7 +54,6 @@ class DataPlotHelper:
         file_name += str(params['trial_idx']) + '.mat'
 
         import os
-        print(os.getcwd()+'/'+folder_name+file_name)
 
         f = h5py.File(os.getcwd()+'/'+folder_name+file_name, 'r') 
 
