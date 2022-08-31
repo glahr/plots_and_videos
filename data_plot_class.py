@@ -9,6 +9,11 @@ class DataPlotHelper:
     def __init__(self, path_folder='') -> None:
         self.path_folder = path_folder
         self.idx_movement_starts = 0
+        self.f_size = 20
+
+        plt.rcParams.update({'font.size': self.f_size})
+        plt.rcParams['text.usetex'] = True ## enable TeX style labels
+        plt.rcParams['text.latex.preamble'] = r"\usepackage{amsmath}"
     
     def copy_dict(self, my_dict):
         return {key: value for key, value in my_dict.items()}
@@ -38,7 +43,7 @@ class DataPlotHelper:
         return idx_forces_above_threshold[0]
 
 
-    def get_data(self, params={}):
+    def get_data(self, params={}, axis=0):
         if not params:
             print('EMTPY PARAMS')
             return 0
@@ -56,7 +61,7 @@ class DataPlotHelper:
 
         f = h5py.File(os.getcwd()+'/'+folder_name+file_name, 'r') 
 
-        return np.array(f.get(params['data_to_plot']))[params['i_initial']:params['i_final']]
+        return np.array(f.get(params['data_to_plot']))[params['i_initial']:params['i_final'], axis]
 
     def plot_data(self, data, show=True):
         plt.plot(data)
@@ -75,12 +80,46 @@ class DataPlotHelper:
                                     (data_info['color'] == params['color']) &
                                     (data_info['height'] == params['height']), idx_name].values
         return idx
-
     
-    def plot_single(self, params, data_info,axis=2):
-        idx_start = self.get_idx_from_file(params, data_info, 'idx_start')[0]
-        idx_end = self.get_idx_from_file(params, data_info, 'idx_end')[0]
-        data = self.get_data(params)
-        fig, ax = plt.subplots(1)
-        ax.plot(data[idx_start:idx_end,axis])
+    def set_axis(self, ax=None, fig=None, xlim_plot=None, xlabel=None, xticks=None, xtickslabels=None,
+                                ylim_plot=None, ylabel=None, yticks=None, ytickslabels=None,
+                                fig_size=[10,10], n_subplots=1):
+        
+        if ax is None or fig is None:
+            fig, ax = plt.subplots(n_subplots,figsize=fig_size)
+        
+        if xlabel is not None:
+            ax.set_xlabel(xlabel, size=self.f_size)
+        
+        if xlim_plot is not None:
+            ax.set_xlim(xlim_plot)
+        
+        if xticks is not None:
+            ax.set_xticks(xticks)
+        
+        if xtickslabels is not None:
+            ax.set_xticklabels(xtickslabels)
+
+        if ylabel is not None:
+            ax.set_ylabel(ylabel, size=self.f_size)
+
+        if ylim_plot is not None:
+            ax.set_ylim(ylim_plot)
+
+        if yticks is not None:
+            ax.set_yticks(yticks)
+
+        if ytickslabels is not None:
+            ax.set_yticklabels(ytickslabels)
+
+        ax.grid(which='major', alpha=0.2, linestyle='--')
+
+        fig.tight_layout()
         return fig, ax
+    
+    def plot_single(self, time, data, fig, ax, color_shape='', lw=2):
+        if '--' in color_shape:
+            lw -= 0.5
+        ax.plot(time, data, color_shape, linewidth=lw)
+        return fig, ax
+

@@ -5,7 +5,7 @@ from data_plot_class import DataPlotHelper
 
 FZ_IDX = 2
 
-path_folder = 'data/icra2022/2-exp-ImpLoop3-NoAdaptation-PARTIAL-RESULTS-DONT-EDIT/'
+path_folder = 'data/icra2023/2-exp-ImpLoop3-NoAdaptation-PARTIAL-RESULTS-DONT-EDIT/'
 data_info = pd.read_csv(path_folder+'data_info.csv')
 
 dh = DataPlotHelper(path_folder)
@@ -33,6 +33,7 @@ for vic in [False, True]:
                 params['color'] = color
                 params['height'] = height
                 params['trial_idx'] = trial_idx
+                params['vic'] = vic
 
                 data = dh.get_data(params)
                 
