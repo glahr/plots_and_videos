@@ -14,7 +14,8 @@ COLORS = ['Green', 'Blue']
 TRIALS_IDXS = [1, 2, 3]
 HEIGHTS = [27]
 
-params = {  
+params = {
+    'empty': False,
     'vic': True,
     'color': 'Blue',
     'trial_idx': 3,
@@ -53,11 +54,23 @@ for vic in [False, True]:
                 data_info.loc[(data_info['experiment_name'] == experiment_name) &
                               (data_info['color'] == color) &
                               (data_info['height'] == height), 'idx_end'] = idx_end
-                
+
+
+params['empty'] = True
+params['i_initial'] = 0
+params['i_final'] = -1
+data = dh.get_data(params)
+
+idx_start = dh.get_idx_movement_starts(params)
+idx_end = dh.get_idx_movement_ends(params)
+
+
+data_info.loc[(data_info['experiment_name'] == 'empty'), 'idx_start'] = idx_start
+data_info.loc[(data_info['experiment_name'] == 'empty'), 'idx_end'] = idx_end
 
 print(data_info)
                 
-data_info.to_csv(path_folder+'data_info.csv')
+data_info.to_csv(path_folder+'data_info.csv', index=False)
 
 
 # params['data_to_plot'] = 'EE_twist_d'

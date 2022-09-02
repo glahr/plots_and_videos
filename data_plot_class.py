@@ -43,22 +43,25 @@ class DataPlotHelper:
 
 
     def get_data(self, params={}, axis=0):
-        if not params:
-            print('EMTPY PARAMS')
-            return 0
-        
-        # folder_name = path_folder + '0-exp-' if params['height'] == 27 else '1-exp-'
-        folder_name = self.path_folder + params['color'] + '-Height' + str(params['height']) + '/'
-        # folder_name += 'ImpLoop' + str(params['impedance_loop']) + '-'
-        # folder_name += 'Height' + str(params['height']) + '/'
-        
-        file_name = 'opt-'
-        file_name += 'kmp-vic-' if params['vic'] else 'kmp-'
-        file_name += str(params['trial_idx']) + '.mat'
+        if not params['empty']:
+            if not params:
+                print('EMTPY PARAMS')
+                return 0
+            
+            # folder_name = path_folder + '0-exp-' if params['height'] == 27 else '1-exp-'
+            folder_name = self.path_folder + params['color'] + '-Height' + str(params['height']) + '/'
+            # folder_name += 'ImpLoop' + str(params['impedance_loop']) + '-'
+            # folder_name += 'Height' + str(params['height']) + '/'
+            
+            file_name = folder_name+'opt-'
+            file_name += 'kmp-vic-' if params['vic'] else 'kmp-'
+            file_name += str(params['trial_idx']) + '.mat'
+        else:
+            print('Getting EMPTY MOVEMENT data')
+            file_name = 'data/icra2023/2-exp-ImpLoop3-NoAdaptation-PARTIAL-RESULTS-DONT-EDIT/empty.mat'
 
         import os
-
-        f = h5py.File(os.getcwd()+'/'+folder_name+file_name, 'r') 
+        f = h5py.File(os.getcwd()+'/'+file_name, 'r')
 
         return np.array(f.get(params['data_to_plot']))[params['i_initial']:params['i_final'], axis]
 
@@ -71,13 +74,27 @@ class DataPlotHelper:
         if idx_name == '':
             print('IDX EMPTY')
             return 0
-        experiment_name = 'opt_kmp'
-        experiment_name += '_vic' if params['vic'] else ''
-        experiment_name += '_' + str(params['trial_idx'])
 
-        idx = data_info.loc[(data_info['experiment_name'] == experiment_name) &
-                                    (data_info['color'] == params['color']) &
-                                    (data_info['height'] == params['height']), idx_name].values
+        # experiment_name = 'opt_kmp'
+        # experiment_name += '_vic' if params['vic'] else ''
+        # experiment_name += '_' + str(params['trial_idx'])
+
+        # idx = data_info.loc[(data_info['experiment_name'] == experiment_name) &
+        #                             (data_info['color'] == params['color']) &
+        #                             (data_info['height'] == params['height']), idx_name].values
+        # return idx[0]
+
+        if not params['empty']:
+            experiment_name = 'opt_kmp'
+            experiment_name += '_vic' if params['vic'] else ''
+            experiment_name += '_' + str(params['trial_idx'])
+
+            idx = data_info.loc[(data_info['experiment_name'] == experiment_name) &
+                                        (data_info['color'] == params['color']) &
+                                        (data_info['height'] == params['height']), idx_name].values
+        else:
+            print('Loading EMPTY MOVEMENT data')
+            idx = data_info.loc[(data_info['experiment_name'] == 'empty'), idx_name].values
         return idx[0]
     
     def set_axis(self, ax=None, fig=None, xlim_plot=None, xlabel=None, xticks=None, xtickslabels=None,
@@ -116,7 +133,7 @@ class DataPlotHelper:
         fig.tight_layout()
         return fig, ax
     
-    def plot_single(self, time, data, fig, ax, color_shape='', lw=2):
+    def plot_single(self, time, data, fig=None, ax=None, color_shape='', lw=2):
         if '--' in color_shape:
             lw -= 0.5
         ax.plot(time, data, color_shape, linewidth=lw)
