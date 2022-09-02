@@ -1,4 +1,3 @@
-from tkinter import N
 import matplotlib.pyplot as plt
 import numpy as np
 import h5py
@@ -21,10 +20,10 @@ class DataPlotHelper:
     def get_idx_movement_starts(self, params):
         aux_params = self.copy_dict(params)
         aux_params['data_to_plot'] = 'EE_twist_d'
-        data_aux = self.get_data(aux_params)
+        data_aux = self.get_data(aux_params, axis=2)
         idx = np.nonzero(data_aux)[0][0]
         for i in range(idx, len(data_aux)):
-            if abs(data_aux[i][2]) >= 1e-5:
+            if abs(data_aux[i]) >= 1e-5:
                 break
             idx += 1
         idx -= 1
@@ -79,7 +78,7 @@ class DataPlotHelper:
         idx = data_info.loc[(data_info['experiment_name'] == experiment_name) &
                                     (data_info['color'] == params['color']) &
                                     (data_info['height'] == params['height']), idx_name].values
-        return idx
+        return idx[0]
     
     def set_axis(self, ax=None, fig=None, xlim_plot=None, xlabel=None, xticks=None, xtickslabels=None,
                                 ylim_plot=None, ylabel=None, yticks=None, ytickslabels=None,

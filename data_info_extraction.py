@@ -35,7 +35,9 @@ for vic in [False, True]:
                 params['trial_idx'] = trial_idx
                 params['vic'] = vic
 
-                data = dh.get_data(params)
+                print(params.items())
+
+                data = dh.get_data(params, axis=FZ_IDX)
                 
                 idx_start = dh.get_idx_movement_starts(params)
                 idx_end = dh.get_idx_movement_ends(params)
