@@ -30,81 +30,72 @@ params = {
     'data_to_plot': 'EE_twist_d',
     }
 
+#------------------ MEAN FORCES
+
 params['color'] = 'Blue'
 params['height'] = 27
 params['trial_idx'] = 1
 params['vic'] = False
 
-idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start')
-idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end')
-params['i_initial'] = idx_start
-params['i_final'] = idx_end
+fts = np.zeros((1500, 3))
 
-params['data_to_plot'] = 'time'
-time = dh.get_data(params, axis=0)
-time = time - time[0]
+for i in [1, 2, 3]:
+    params['trial_idx'] = i
 
-params['data_to_plot'] = 'EE_twist_d'
-EE_twist_d = dh.get_data(params, axis=Z_AXIS)
+    if i == 1:
+        offset = -14
+    if i == 2:
+        offset = 0
+    if i==3:
+        offset = 20
 
-params['data_to_plot'] = 'EE_twist'
-EE_twist = dh.get_data(params, axis=Z_AXIS)
+    idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start')
+    idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end')
+    params['i_initial'] = idx_start + offset
+    params['i_final'] = idx_end + offset
 
-# -----------------
+    params['data_to_plot'] = 'time'
+    time = dh.get_data(params, axis=0)
+    time = time - time[0]
+
+    params['data_to_plot'] = 'FT_ati'
+    # FT_ati = dh.get_data(params, axis=Z_AXIS
+    # fts.append(dh.get_data(params, axis=Z_AXIS))
+    fts[:,i-1] = dh.get_data(params, axis=Z_AXIS)
+
 
 params['color'] = 'Blue'
 params['height'] = 27
 params['trial_idx'] = 1
 params['vic'] = True
 
-idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start')
-idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end')
-params['i_initial'] = idx_start+1
-params['i_final'] = idx_end+1
+fts_vic = np.zeros((1500, 3))
 
-params['data_to_plot'] = 'time'
-time_vic = dh.get_data(params, axis=0)
-time_vic = time_vic - time_vic[0]
+vic_offset = 24
 
-params['data_to_plot'] = 'EE_twist_d'
-EE_twist_d_vic = dh.get_data(params, axis=Z_AXIS)
+for i in [1, 2, 3]:
+    params['trial_idx'] = i
 
-params['data_to_plot'] = 'EE_twist'
-EE_twist_vic = dh.get_data(params, axis=Z_AXIS)
-# END LOAD DATA
+    offset = 6 if i==2 else 0
 
-xlim_plot = [time_vic[0], time_vic[-1]]
-ylim_plot = [-1.5, 0.5]
-labels=['$\dot{x}_{KMP}$', '$\dot{x}_{KMP+VIC}$', '$\dot{x}_d$']
-ylabel = '$\dot{x}~[m/s]$'
-xlabel = '$time~[s]$'
-xticks =      [0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
-xtickslabels = ['$0$', '$0.25$', '$0.5$', '$0.75$', '$1.0$', '$1.25$', '$1.5$']
-yticks = None
-ytickslabels = None
-fig_size = [10, 4]  # width, height
+    idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start')
+    idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end')
+    params['i_initial'] = idx_start + offset + vic_offset
+    params['i_final'] = idx_end + offset + vic_offset
 
-fig, ax = dh.set_axis(xlim_plot=xlim_plot, xlabel=xlabel, xticks=xticks, xtickslabels=xtickslabels,
-                      ylim_plot=ylim_plot, ylabel=ylabel, yticks=yticks, ytickslabels=ytickslabels,
-                      fig_size=fig_size)
+    params['data_to_plot'] = 'time'
+    time = dh.get_data(params, axis=0)
+    time = time - time[0]
 
-fig, ax = dh.plot_single(time=time, data=EE_twist, fig=fig, ax=ax)
-fig, ax = dh.plot_single(time=time_vic, data=EE_twist_vic, fig=fig, ax=ax)
-fig, ax = dh.plot_single(time=time, data=EE_twist_d, fig=fig, ax=ax, color_shape='k--')
+    params['data_to_plot'] = 'FT_ati'
+    # FT_ati = dh.get_data(params, axis=Z_AXIS
+    # fts_vic.append(dh.get_data(params, axis=Z_AXIS))
+    fts_vic[:,i-1] = dh.get_data(params, axis=Z_AXIS)
 
-# fig, ax = dh.set_axis(xlim_plot=xlim_plot, xlabel=xlabel, xticks=xticks, xtickslabels=xtickslabels,
-#                       ylim_plot=ylim_plot, ylabel=ylabel, yticks=yticks, ytickslabels=ytickslabels,
-#                       fig_size=fig_size)
-# fig, ax = dh.plot_single(time=time_vic, data=EE_twist_d_vic, fig=fig, ax=ax, color_shape='g--')
+FT = np.mean(fts, axis=1)
+FT_vic = np.mean(fts_vic, axis=1)
 
-labels=['$\dot{x}_{KMP}$', '$\dot{x}_{KMP+VIC}$', '$\dot{x}_{d}$']
-ax.legend(labels=labels, borderaxespad=0.1,
-          handlelength=0.8, fontsize=LEGEND_SIZE)
-
-plt.show()
-
-
-# ------------------------------ MEAN
+# ---------------------- MEAN TWIST
 params['color'] = 'Blue'
 params['height'] = 27
 params['trial_idx'] = 1
@@ -164,6 +155,9 @@ for i in [1, 2, 3]:
 EE = np.mean(ees, axis=1)
 EE_vic = np.mean(ees_vic, axis=1)
 
+power = np.multiply(EE, FT)
+power_vic = np.multiply(EE_vic, FT_vic)
+
 
 file_name = path_folder + 'empty.mat'
 idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start', file_name=file_name)
@@ -175,22 +169,35 @@ time_empty = dh.get_data(params, axis=0)
 time_empty = time_empty - time_empty[0]
 params['data_to_plot'] = 'EE_twist'
 EE_empty = dh.get_data(params, Z_AXIS, file_name)
+params['data_to_plot'] = 'FT_ati'
+FT_empty = dh.get_data(params, Z_AXIS, file_name)
+power_empty = np.multiply(EE_empty, FT_empty)
+
+
+xlim_plot = [time[0], time[-1]]
+ylim_plot = [-20, 5]
+labels=['$P_{KMP}$', '$P_{KMP+VIC}$']
+ylabel = '$P~[W]$'
+xlabel = '$time~[s]$'
+xticks =      [0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
+xtickslabels = ['$0$', '$0.25$', '$0.5$', '$0.75$', '$1.0$', '$1.25$', '$1.5$']
+yticks = None
+ytickslabels = None
+fig_size = [10, 4]  # width, height
 
 fig, ax = dh.set_axis(xlim_plot=xlim_plot, xlabel=xlabel, xticks=xticks, xtickslabels=xtickslabels,
                       ylim_plot=ylim_plot, ylabel=ylabel, yticks=yticks, ytickslabels=ytickslabels,
                       fig_size=fig_size)
-# ax.set_prop_cycle(color=['black', 'blue', 'blue', 'red', 'green', 'blue'])
-fig, ax = dh.plot_single(time=time, data=EE, fig=fig, ax=ax)
-fig, ax = dh.plot_single(time=time, data=EE_vic, fig=fig, ax=ax)
-fig, ax = dh.plot_single(time=time_empty, data=EE_empty, fig=fig, ax=ax)
-fig, ax = dh.plot_single(time=time, data=EE_twist_d, fig=fig, ax=ax, color_shape='k--')
+fig, ax = dh.plot_single(time=time, data=power, fig=fig, ax=ax)
+fig, ax = dh.plot_single(time=time, data=power_vic, fig=fig, ax=ax)
+fig, ax = dh.plot_single(time=time, data=power_empty, fig=fig, ax=ax)
 
 
 # fig, ax = dh.plot_single(time=time_vic, data=EE_twist_d_vic, fig=fig, ax=ax, color_shape='g--')
 
-labels=['$\overline{\dot{x}}_{KMP}$', '$\overline{\dot{x}}_{KMP+VIC}$', '$\dot{x}_{empty}$', '$\dot{x}_{d}$']
+labels=['$\overline{P}_{KMP}$', '$\overline{P}_{KMP+VIC}$', '$P_{empty}$']
 ax.legend(labels=labels, borderaxespad=0.1,
           handlelength=0.8, fontsize=LEGEND_SIZE)
 
 plt.show()
-# fig.savefig('twist_average_comparison.png')
+# fig.savefig('power_average_comparison.png')

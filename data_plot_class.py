@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import h5py
+import os
 
 FORCE_THRESHOLD = 3
 
@@ -42,8 +43,8 @@ class DataPlotHelper:
         return idx_forces_above_threshold[0]
 
 
-    def get_data(self, params={}, axis=0):
-        if not params['empty']:
+    def get_data(self, params={}, axis=0, file_name=None):
+        if file_name is None:
             if not params:
                 print('EMTPY PARAMS')
                 return 0
@@ -56,35 +57,23 @@ class DataPlotHelper:
             file_name = folder_name+'opt-'
             file_name += 'kmp-vic-' if params['vic'] else 'kmp-'
             file_name += str(params['trial_idx']) + '.mat'
+            f = h5py.File(os.getcwd()+'/'+file_name, 'r')
         else:
-            print('Getting EMPTY MOVEMENT data')
-            file_name = 'data/icra2023/2-exp-ImpLoop3-NoAdaptation-PARTIAL-RESULTS-DONT-EDIT/empty.mat'
-
-        import os
-        f = h5py.File(os.getcwd()+'/'+file_name, 'r')
+            f = h5py.File(file_name, 'r')
 
         return np.array(f.get(params['data_to_plot']))[params['i_initial']:params['i_final'], axis]
-
+    
     def plot_data(self, data, show=True):
         plt.plot(data)
         if show:
             plt.show()
     
-    def get_idx_from_file(self, params, data_info, idx_name=''):
+    def get_idx_from_file(self, params, data_info, idx_name='', file_name=None):
         if idx_name == '':
             print('IDX EMPTY')
             return 0
-
-        # experiment_name = 'opt_kmp'
-        # experiment_name += '_vic' if params['vic'] else ''
-        # experiment_name += '_' + str(params['trial_idx'])
-
-        # idx = data_info.loc[(data_info['experiment_name'] == experiment_name) &
-        #                             (data_info['color'] == params['color']) &
-        #                             (data_info['height'] == params['height']), idx_name].values
-        # return idx[0]
-
-        if not params['empty']:
+            
+        if file_name is None:
             experiment_name = 'opt_kmp'
             experiment_name += '_vic' if params['vic'] else ''
             experiment_name += '_' + str(params['trial_idx'])
@@ -93,8 +82,11 @@ class DataPlotHelper:
                                         (data_info['color'] == params['color']) &
                                         (data_info['height'] == params['height']), idx_name].values
         else:
-            print('Loading EMPTY MOVEMENT data')
-            idx = data_info.loc[(data_info['experiment_name'] == 'empty'), idx_name].values
+            if 'empty' in file_name:
+                idx = data_info.loc[(data_info['experiment_name'] == 'empty'), idx_name].values
+            else:
+                print("ERROR IN GETTING IDX")
+                return 0
         return idx[0]
     
     def set_axis(self, ax=None, fig=None, xlim_plot=None, xlabel=None, xticks=None, xtickslabels=None,
