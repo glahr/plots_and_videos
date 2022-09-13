@@ -13,6 +13,7 @@ dh = DataPlotHelper(path_folder)
 COLORS = ['Green', 'Blue']
 TRIALS_IDXS = [1, 2, 3]
 HEIGHTS = [27]
+SECONDS = 1.0
 
 params = {
     'empty': False,
@@ -41,7 +42,7 @@ for vic in [False, True]:
                 data = dh.get_data(params, axis=FZ_IDX)
                 
                 idx_start = dh.get_idx_movement_starts(params)
-                idx_end = dh.get_idx_movement_ends(params)
+                idx_end = dh.get_idx_movement_ends(params, seconds=SECONDS)
 
                 experiment_name = 'opt_kmp'
                 experiment_name += '_vic' if vic else ''
@@ -56,20 +57,27 @@ for vic in [False, True]:
                               (data_info['height'] == height), 'idx_end'] = idx_end
 
 
-params['empty'] = True
+file_name = path_folder + 'empty.mat'
 params['i_initial'] = 0
 params['i_final'] = -1
 data = dh.get_data(params)
-
 idx_start = dh.get_idx_movement_starts(params)
 idx_end = dh.get_idx_movement_ends(params)
-
-
 data_info.loc[(data_info['experiment_name'] == 'empty'), 'idx_start'] = idx_start
 data_info.loc[(data_info['experiment_name'] == 'empty'), 'idx_end'] = idx_end
 
+
+file_name = path_folder + 'const-imp.mat'
+params['i_initial'] = 0
+params['i_final'] = -1
+data = dh.get_data(params)
+idx_start = dh.get_idx_movement_starts(params)
+idx_end = dh.get_idx_movement_ends(params)
+data_info.loc[(data_info['experiment_name'] == 'const_imp'), 'idx_start'] = idx_start
+data_info.loc[(data_info['experiment_name'] == 'const_imp'), 'idx_end'] = -1
+
 print(data_info)
-                
+
 data_info.to_csv(path_folder+'data_info.csv', index=False)
 
 

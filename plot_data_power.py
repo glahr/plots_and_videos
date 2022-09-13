@@ -174,6 +174,20 @@ FT_empty = dh.get_data(params, Z_AXIS, file_name)
 power_empty = np.multiply(EE_empty, FT_empty)
 
 
+file_name = path_folder + 'const-imp.mat'
+idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start', file_name=file_name)
+idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end', file_name=file_name)
+params['i_initial'] = idx_start
+params['i_final'] = idx_end
+params['data_to_plot'] = 'time'
+time_const_imp = dh.get_data(params, axis=0)
+time_const_imp = time_const_imp - time_const_imp[0]
+params['data_to_plot'] = 'EE_twist'
+EE_const_imp = dh.get_data(params, Z_AXIS, file_name)
+params['data_to_plot'] = 'FT_ati'
+FT_const_imp = dh.get_data(params, Z_AXIS, file_name)
+power_const_imp = np.multiply(EE_const_imp, FT_const_imp)
+
 xlim_plot = [time[0], time[-1]]
 ylim_plot = [-20, 5]
 labels=['$P_{KMP}$', '$P_{KMP+VIC}$']

@@ -84,6 +84,8 @@ class DataPlotHelper:
         else:
             if 'empty' in file_name:
                 idx = data_info.loc[(data_info['experiment_name'] == 'empty'), idx_name].values
+            elif 'const-imp' in file_name:
+                idx = data_info.loc[(data_info['experiment_name'] == 'const_imp'), idx_name].values
             else:
                 print("ERROR IN GETTING IDX")
                 return 0
@@ -125,9 +127,9 @@ class DataPlotHelper:
         fig.tight_layout()
         return fig, ax
     
-    def plot_single(self, time, data, fig=None, ax=None, color_shape='', lw=2):
-        if '--' in color_shape:
+    def plot_single(self, time, data, fig=None, ax=None, shape='', color=None, lw=3):
+        if '--' in shape:
             lw -= 0.5
-        ax.plot(time, data, color_shape, linewidth=lw)
+        ax.plot(time, data, shape, color=color, linewidth=lw)
         return fig, ax
 
