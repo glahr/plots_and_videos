@@ -71,13 +71,16 @@ FT_ati_vic = dh.get_data(params, axis=Z_AXIS)
 # ----------------------
 xlim_plot = [time[0], 500/1000]#N_POINTS/1000]
 ylim_plot = [-3.5, 32]
-ylabel = '$\\boldsymbol{F}~[N]$'
-xlabel = '$\\boldsymbol{t}~[s]$'
-xticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5]#, 0.75, 1.0]
-xtickslabels = ['$0$', '$0.1$', '$0.2$', '$0.3$','$0.4$', '$0.5$']#, '$0.75$', '$1.0$']
+ylabel = '$\\boldsymbol{F}~[N]$'    
+# xlabel = '$\\boldsymbol{t}~[s]$'
+xlabel = ''
+# xticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5]#, 0.75, 1.0]
+# xtickslabels = ['$0$', '$0.1$', '$0.2$', '$0.3$','$0.4$', '$0.5$']#, '$0.75$', '$1.0$']
+xticks = []
+xtickslabels = []
 yticks = [0, 10, 20, 30]
 ytickslabels = ['$0$', '$10$', '$20$', '$30$']
-fig_size = [8, 3]  # width, height
+fig_size = [8, 2]  # width, height
 
 # fig, ax = dh.set_axis(xlim_plot=xlim_plot, xlabel=xlabel, xticks=xticks, xtickslabels=xtickslabels,
 #                       ylim_plot=ylim_plot, ylabel=ylabel, yticks=yticks, ytickslabels=ytickslabels,

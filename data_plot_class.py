@@ -10,6 +10,7 @@ class DataPlotHelper:
         self.path_folder = path_folder
         self.idx_movement_starts = 0
         self.f_size = 20
+        self.lw = 3
 
         plt.rcParams.update({'font.size': self.f_size})
         plt.rcParams['text.usetex'] = True ## enable TeX style labels
@@ -100,6 +101,8 @@ class DataPlotHelper:
         
         if xlabel is not None:
             ax.set_xlabel(xlabel, size=self.f_size)
+        elif xlabel == '':
+            ax.set_xlabel(xlabel, size=self.f_size/10)
         
         if xlim_plot is not None:
             ax.set_xlim(xlim_plot)
@@ -129,7 +132,9 @@ class DataPlotHelper:
     
     def plot_single(self, time, data, fig=None, ax=None, shape='', color=None, lw=3):
         if '--' in shape:
-            lw -= 0.5
+            lw = self.lw - 0.5
+        else:
+            lw = self.lw
         ax.plot(time, data, shape, color=color, linewidth=lw)
         return fig, ax
 
