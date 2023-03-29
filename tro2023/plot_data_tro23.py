@@ -14,6 +14,8 @@ import palettable
 from palettable.cartocolors.qualitative import Safe_10 as myc
 from scipy.signal import find_peaks as peaks
 from data_class import DataClass
+import matplotlib.animation as animation
+
 
 z_catching = 0.35
 lw = 2
@@ -1156,16 +1158,25 @@ def plot_zoom_forces_single_plot():
     # fig_b, ax_b = plt.subplots(1,1)
 
     idx_ft = 1
-    idx_init = 491
-    idx_final = idx_init + 150
 
     legend_ft = [r'$F_z$' for _ in range(n_exps)]
 
-    for j, idx_exp in enumerate(chosen_exps):
-        file_name = dh._get_name(idx_exp)
+    for j, idx_exp in enumerate(['fp-kl', 'fp-kh', 'vm-kl', 'vm-kh', 'vm-sic','vm-vic']):
+        file_name = dh._get_name(chosen_exps[idx_exp])
         print(file_name)
-        params['idx_initial'] = dh.get_idx_from_file(idx_exp, data_info, idx_name='idx_start')
-        params['idx_end'] = dh.get_idx_from_file(idx_exp, data_info, idx_name='idx_end')
+
+        if idx_exp == 'vm-sic' or idx_exp == 'vm-kh' or idx_exp == 'fp-kl':
+            idx_init = 490
+            idx_final = idx_init + 150
+        elif idx_exp == 'fp-kh':
+            idx_init = 491
+            idx_final = idx_init + 150
+        else:
+            idx_init = 488
+            idx_final = idx_init + 150
+        
+        params['idx_initial'] = dh.get_idx_from_file(chosen_exps[idx_exp], data_info, idx_name='idx_start')
+        params['idx_end'] = dh.get_idx_from_file(chosen_exps[idx_exp], data_info, idx_name='idx_end')
 
         time = dh.get_data(file_name=file_name,params=params, data_to_plot='time')
         time -= time[0]
@@ -1213,10 +1224,12 @@ def plot_zoom_forces_single_plot():
     ax.grid()
     # fig.set_tight_layout(tight=True)
 
+    ax.axvline(0.34, color='r', linestyle='dashed')
+
     plt.subplots_adjust(hspace=0.045)
     fig.set_constrained_layout(constrained=True)
     plt.show()
-    fig.savefig('images/1d_force_comparison.png', dpi=300, bbox_inches='tight')
+    fig.savefig('images/1d_force_comparison.png', dpi=400, bbox_inches='tight')
 
 def plot_zoom_position_single_plot():
     line_cycler   = (cycler(color=["#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7", "#F0E442"]) +
@@ -1227,8 +1240,8 @@ def plot_zoom_position_single_plot():
                  cycler(marker=["4", "2", "3", "1", "+", "x", "."]))
     # gray_cycler = (cycler(color=['greys']) + cycler(linestyle=["-", "--", "-"]))
     # colors_i_want = [0, 0, 1, 1, 2, 3, -1]
-    colors_i_want = [0, 1, 2, 3, -1]
-    my_cyc = cycler(color=[myc.mpl_colors[i] for i in colors_i_want]) + cycler(linestyle=["-", '-', '-', "-", "-"])
+    colors_i_want = [2, 3, -1, -1]
+    my_cyc = cycler(color=[myc.mpl_colors[i] for i in colors_i_want]) + cycler(linestyle=["--", '-', '--', "-"])
     # my_cyc = cycler(color=myc.mpl_colors[:5]) + cycler(linestyle=["-", "-", "--", "-", "--"])
     print(myc.mpl_colors)
     plt.rc("axes", prop_cycle=my_cyc)
@@ -1253,11 +1266,12 @@ def plot_zoom_position_single_plot():
 
     legend_ft = [r'$z~[m]$' for _ in range(n_exps)]
 
-    for j, idx_exp in enumerate(chosen_exps[2:]):
-        file_name = dh._get_name(idx_exp)
+    for j, idx_exp in enumerate(['vm-kl', 'vm-kh', 'vm-sic', 'vm-vic']):
+        file_name = dh._get_name(chosen_exps[idx_exp])
         print(file_name)
-        params['idx_initial'] = dh.get_idx_from_file(idx_exp, data_info, idx_name='idx_start')
-        params['idx_end'] = dh.get_idx_from_file(idx_exp, data_info, idx_name='idx_end')
+        
+        params['idx_initial'] = dh.get_idx_from_file(chosen_exps[idx_exp], data_info, idx_name='idx_start')
+        params['idx_end'] = dh.get_idx_from_file(chosen_exps[idx_exp], data_info, idx_name='idx_end')
 
         time = dh.get_data(file_name=file_name,params=params, data_to_plot='time')
         time -= time[0]
@@ -1295,7 +1309,7 @@ def plot_zoom_position_single_plot():
     legend_vm.append('$VM$'+'\n'+'$SIC$')
     legend_vm.append('$VM$'+'\n'+'$VIC$')
     # ax[0].legend(legend_fp, prop={'size': 8}, fancybox=True, framealpha=0.5, loc='lower right')
-    leg = ax.legend(legend_vm, prop={'size': 14}, fancybox=True, framealpha=0.5, ncol=2, loc='lower left')
+    leg = ax.legend(legend_vm, prop={'size': 10}, fancybox=True, framealpha=0.5, ncol=2, loc='lower left')
     leg.get_frame().set_alpha(None)
     leg.get_frame().set_facecolor((1.0, 1.0, 1, 1))
 
@@ -1310,7 +1324,7 @@ def plot_zoom_position_single_plot():
     plt.subplots_adjust(hspace=0.045)
     fig.set_constrained_layout(constrained=True)
     plt.show()
-    fig.savefig('images/1d_pos_comparison.png', dpi=300, bbox_inches='tight')
+    fig.savefig('images/1d_pos_comparison.png', dpi=400, bbox_inches='tight')
 
 def plot_best_2d():
     chosen_exps = [19, 21, 22, 23]
@@ -1719,7 +1733,7 @@ def plot_best_2d():
     # print('\nVM-VIC-DIM2 metrics:','\tCatching time delay = ', 0.6979-.631)
 
     plt.show()
-    fig.savefig('images/2d-time-plots.png', dpi=300, bbox_inches='tight')
+    fig.savefig('images/2d-time-plots.png', dpi=400, bbox_inches='tight')
     # fig_yz.savefig('images/2d_spatial.png')
 
 def plot_rmm_1d_all_in_one_4_plots():
@@ -2079,12 +2093,23 @@ def plot_rmm_1d_1_plot():
     leg = ax[-1].legend(prop={'size': 8}, loc='lower right', bbox_to_anchor=(1.01, 0.65), ncol=4)
     leg.get_frame().set_alpha(None)
     leg.get_frame().set_facecolor((1.0, 1.0, 1, 1))
+
+    for j in range(5):
+            if j == 0:
+                ax[j].legend(prop={'size': 9}, loc='upper right', ncol=2)
+            if j == 1:
+                ax[j].legend(prop={'size': 9}, loc='lower right', ncol=2)
+            if j == idx_tau:
+                leg = ax[j].legend(prop={'size': 8}, loc='lower right', ncol=4, bbox_to_anchor=(1.01, 0.65))
+                leg.get_frame().set_alpha(None)
+                leg.get_frame().set_facecolor((1.0, 1.0, 1, 1))
+
     # ax[-2].legend(prop={'size': 10}, loc='lower right')
     # ax[-3].legend(prop={'size': 10}, loc='lower right')
     ax[-1].axvline(x = 0.293, ymin=0, ymax=6, linestyle='--', linewidth=1.1, color = 'r', label = '_nolegend_', clip_on=False)
 
     plt.show()
-    fig.savefig('images/1d_plots_dim.png', dpi=300, bbox_inches='tight')
+    fig.savefig('images/1d_plots_dim.png', dpi=400, bbox_inches='tight')
 
 def plot_rmm_1d_1_plot_with_without_dim():
     # colors = ['b', 'r', 'g', 'y']
@@ -2260,7 +2285,7 @@ def plot_rmm_1d_1_plot_with_without_dim():
     ax_dim[-1].axvline(x = 0.293, ymin=0, ymax=7.25, linestyle='--', linewidth=1.1, color = 'r', label = '_nolegend_', clip_on=False)
 
     plt.show()
-    fig_dim.savefig('images/1d_plots_dim.png', dpi=300, bbox_inches='tight')
+    fig_dim.savefig('images/1d_plots_dim.png', dpi=400, bbox_inches='tight')
 
 def plot_rmm_2d_all_in_one():
     chosen_exps = [22, 23]
@@ -3216,7 +3241,7 @@ def plot_1d_increased_height():
     print('time delay catching = ', 0.341-0.294)
 
     plt.show()
-    fig.savefig('images/1d_increased_height.png', dpi=300, bbox_inches='tight')
+    fig.savefig('images/1d_increased_height.png', dpi=400, bbox_inches='tight')
 
 def get_metrics_tables():
     # colors = ['b', 'r', 'g', 'y']
@@ -3418,6 +3443,7 @@ def robots_ratio():
 
 def cartesian_plots_and_metrics_all():
     # big pic 1d
+
     if True:
         n_exps = len(chosen_exps)-1  # remove -1 to add the plot for VM-VIC-DIM in the 1d comparison
         data_1d = {k: DataClass() for k in chosen_exps.keys()}
@@ -3902,7 +3928,135 @@ def cartesian_plots_and_metrics_all():
     ax_dim[-1].axvline(x = 0.34, ymin=0, ymax=7.25, linestyle='--', linewidth=1.1, color = 'r', label = '_nolegend_', clip_on=False)
 
     plt.show()
-    fig_dim.savefig('images/1d_plots_dim.png', dpi=300, bbox_inches='tight')
+    fig_dim.savefig('images/1d_plots_dim.png', dpi=400, bbox_inches='tight')
+
+    return data_1d
+
+def generate_videos_1d(data_1d):
+    
+    def animate_video(j):
+        idx = j*STEP
+        plots_force.set_data(data_1d[key_exp].time[:idx], data_1d[key_exp].ft_[:idx])
+        plots_k.set_data(data_1d[key_exp].time[:idx], data_1d[key_exp].Kp[:idx])
+        plots_twist.set_data(data_1d[key_exp].time[:idx], data_1d[key_exp].vel[:idx])
+        plots_pos.set_data(data_1d[key_exp].time[:idx], data_1d[key_exp].pos[:idx])
+
+        # if data_1d[key_exp].time_f[0] < data_1d[key_exp].time[idx] and data_1d[key_exp].time_f[-1] > data_1d[key_exp].time[idx]:
+        #     plots_pos_ball.set_data(data_1d[key_exp].time_f[:(j-j_init_ball)*STEP], data_1d[key_exp].z_actual_hat[:(j-j_init_ball)*STEP])
+        #     plots_twist_ball.set_data(data_1d[key_exp].time_f[:(j-j_init_ball)*STEP], data_1d[key_exp].z_dot_actual_hat[:(j-j_init_ball)*STEP])
+    
+    ylimits_ft = [-20, 5]
+    ylimits_Kp = [10, 50]
+    ylimits_pos = [0, 0.8]
+    ylimits_vel = [-2.75, 1]
+
+    idx_pos = 0
+    idx_vel = 1
+    idx_ft = 2
+    idx_Kp = 3
+    add_lw = 1
+
+    legend_ft = [r'$F_z$' for _ in range(1)]
+    legend_Kp = [r'$K_H$' for _ in range(1)]
+    legend_pos = [r'$z$' for _ in range(1)]
+    legend_vel = [r'$\dot{z}$' for _ in range(1)]
+    
+    for key_exp in chosen_exps.keys():
+        print(key_exp)
+        fig, ax = plt.subplots(4, figsize=(6, 8), layout="constrained")
+
+        ax[idx_ft].set_xlim(xlimits)
+        ax[idx_ft].set_ylim(ylimits_ft)
+
+        ax[idx_Kp].set_xlim(xlimits)
+        ax[idx_Kp].set_ylim(ylimits_Kp)
+
+        ax[idx_pos].set_xlim(xlimits)
+        ax[idx_pos].set_ylim(ylimits_pos)
+
+        ax[idx_vel].set_xlim(xlimits)
+        ax[idx_vel].set_ylim(ylimits_vel)
+
+        ax[idx_pos].set_ylabel('$z~[m]$')
+        ax[idx_vel].set_ylabel('$\dot{z}~[m/s]$')
+        ax[idx_Kp].set_ylabel('$K_p$')
+        ax[idx_ft].set_ylabel('$F_z~[N]$')
+        fig.align_ylabels()
+
+        ax[0].set_xticks([])
+        ax[1].set_xticks([])
+        ax[2].set_xticks([])
+        # ax[3].set_xticks([])
+
+        x_grids = list(np.arange(0,2,0.25))
+        alpha_grids = 0.12
+        y_grids_ft = [-15, -10, -5, 0, 5]
+        y_grids_Kp = [0, 10, 20, 30, 40, 50]
+        y_grids_pos = [i for i in list(np.arange(0, 0.81, 0.1))]
+        y_grids_vel = [-2, -1, 0, 0.5]
+        for j, e in enumerate(ax):
+            [e.axvline(xg, color='k', alpha=alpha_grids) for xg in x_grids]
+            if idx_ft == j:
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_ft]
+                # e.axhline(0, color='k')
+                # e.set_yticks([0, -5, -15])
+                # e.set_yticklabels(['$0$', '$-5$', '$-15$'], size=13)
+                e.set_yticks([5, 0, -5, -10, -15, -20])
+                e.set_yticklabels(['$5$', '$0$', "$-5$", '$-10$', '$-15$', '$-20$'], size=13)
+            if idx_Kp == j:
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_Kp]
+                e.set_yticks([10, 20, 30, 40, 50])
+                e.set_yticklabels(['$10$', '$20$', '$30$', '$40$', '$50$'], size=13)
+            if idx_pos == j:
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_pos]
+                aux = [0, 0.2, 0.4, 0.6, 0.8]
+                e.set_yticks(aux)
+                e.set_yticklabels(['$'+str(a)+'$' for a in aux], size=13)
+            if idx_vel == j:
+                e.set_yticks([-2, -1, 0])
+                e.set_yticklabels(['$-2$', '$-1$', '$0$'], size=13)
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_vel]
+
+        plots_force, = ax[idx_ft].plot(data_1d[key_exp].time[0], data_1d[key_exp].ft_[0], linewidth=dh.lw, color='k')
+        plots_k, = ax[idx_Kp].plot(data_1d[key_exp].time[0], data_1d[key_exp].Kp[0], linewidth=dh.lw, color='k')
+        plots_twist, = ax[idx_vel].plot(data_1d[key_exp].time[0], data_1d[key_exp].vel[0], linewidth=dh.lw, color='k')
+        plots_pos, = ax[idx_pos].plot(data_1d[key_exp].time[0], data_1d[key_exp].pos[0], linewidth=dh.lw, color='k')
+
+        plots_pos_ball, = ax[idx_pos].plot(data_1d[key_exp].time_f[0], data_1d[key_exp].z_actual_hat[0], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$z_b$')
+        plots_twist_ball, = ax[idx_vel].plot(data_1d[key_exp].time_f[0], data_1d[key_exp].z_dot_actual_hat[0], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$\dot{z}_b$')
+
+        # labels=['$\overline{\\boldsymbol{F}}_{VM-IC}$']
+        # ax[0].legend(labels=labels, borderaxespad=0.1, handlelength=0.8, fontsize=LEGEND_SIZE)
+
+        # labels=['$\\boldsymbol{K}_{VM-IC}$']
+        # ax[1].legend(labels=labels, borderaxespad=0.1, handlelength=0.8, fontsize=LEGEND_SIZE, loc='lower right')
+
+        # labels=['$\dot{\\boldsymbol{x}}_{d}$', '$\overline{\dot{\\boldsymbol{x}}}_{VM-IC}$']
+        # ax[2].legend(labels=labels, borderaxespad=0.1, handlelength=0.8, fontsize=LEGEND_SIZE, loc='lower right')
+
+        # labels=['$\\boldsymbol{x}_{d}$', '$\overline{\\boldsymbol{x}}_{VM-IC}$']
+        # ax[3].legend(labels=labels, borderaxespad=0.1, handlelength=0.8, fontsize=LEGEND_SIZE)
+
+
+        STEP = 5
+        N_POINTS = 1000
+        # if plot_now == 'const':
+        #     STEP = 1
+
+        n_frames = int((N_POINTS)/STEP)
+        print("n_frames = ", n_frames)
+        # print("video duration = +-", n_frames/FPS)
+
+        animation_1 = animation.FuncAnimation(plt.gcf(), animate_video, interval=1, repeat=False, frames=n_frames)
+
+        ### visualization
+        # plt.show()
+
+        video_name = 'video_'+key_exp+'.mp4'
+        ### creating and saving the video
+        writervideo = animation.FFMpegWriter(fps=30)
+        animation_1.save(path_folder + video_name, writer=writervideo)
+        # plt.show()
 
 if __name__=='__main__':
     # plot_all_vanilla()
@@ -3914,7 +4068,7 @@ if __name__=='__main__':
     # plot_zoom_forces()
     # plot_zoom_forces_single_plot()  # T-RO
     # plot_zoom_position_single_plot()  # T-RO
-    # plot_best_2d()  # T-RO
+    plot_best_2d()  # T-RO
     # plot_rmm_1d_all_in_one_4_plots()
     # plot_rmm_1d_1_plot()
     # plot_rmm_1d_1_plot_with_without_dim() # T-RO
@@ -3927,5 +4081,6 @@ if __name__=='__main__':
     # polar_plots_metrics()
     # get_metrics_tables()
     # robots_ratio()
-    cartesian_plots_and_metrics_all()  # T-RO
+    # data = cartesian_plots_and_metrics_all()  # T-RO
+    # generate_videos_1d(data)
     pass
