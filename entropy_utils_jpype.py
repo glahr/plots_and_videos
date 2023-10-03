@@ -27,7 +27,7 @@ def get_pmf(data_x, data_y, n_bins):
         pxy += np.histogram2d(p_o, p_h, bins=n_bins, range=[lims_data_x,lims_data_y])[0]
     
     pxy /= np.sum(pxy)
-    pxy[pxy == 0.] = 1e-7
+    # pxy[pxy == 0.] = 1e-7
 
     dxy = dit.Distribution.from_ndarray(pxy)
     
@@ -125,4 +125,96 @@ def calc_cte(sourceArray=[], destArray=[], condArray=[], k_hist=1, k_tau=1, l_hi
     cteCalc.finaliseAddObservations()
     
     result = cteCalc.computeAverageLocalOfObservations()
+    return result
+
+
+def optim_te_destination_only(sourceArray=[], destArray=[]):
+    # 1. Construct the calculator:
+    calcClass = JPackage("infodynamics.measures.continuous.kraskov").TransferEntropyCalculatorKraskov
+    calc = calcClass()
+    # 2. Set any properties to non-default values:
+    # calc.setProperty("USE_GPU", "true")
+    calc.setProperty("AUTO_EMBED_METHOD", "MAX_CORR_AIS_DEST_ONLY")
+    calc.setProperty("AUTO_EMBED_K_SEARCH_MAX", "12")
+    calc.setProperty("AUTO_EMBED_TAU_SEARCH_MAX", "25")
+    # 3. Initialise the calculator for (re-)use:
+    calc.initialise()
+    # 4. Supply the sample data:
+    calc.startAddObservations()
+    for s, d in zip(sourceArray, destArray):
+        calc.addObservations(JArray(JDouble, 1)(s), JArray(JDouble, 1)(d))
+    calc.finaliseAddObservations()
+    # 5. Compute the estimate:
+    result = calc.computeAverageLocalOfObservations()
+
+    # print("TE_Kraskov (KSG)(s -> d) = %.4f nats" %(result))
+    
+    # 6. Check the auto-selected parameters and print out the result:
+    optimisedK = int(str(calc.getProperty(calcClass.K_PROP_NAME)))
+    optimisedKTau = int(str(calc.getProperty(calcClass.K_TAU_PROP_NAME)))
+
+    # print('optimisedK = ', optimisedK, '\toptimisedKTau = ', optimisedKTau)
+    return optimisedK, optimisedKTau
+
+
+def optim_te_source(sourceArray=[], destArray=[], k_hist=1, k_tau=1):
+    # 1. Construct the calculator:
+    calcClass = JPackage("infodynamics.measures.continuous.kraskov").TransferEntropyCalculatorKraskov
+    calc = calcClass()
+    # 2. Set any properties to non-default values:
+    # calc.setProperty("USE_GPU", "true")
+    calc.setProperty("AUTO_EMBED_METHOD", "MAX_CORR_AIS")
+    calc.setProperty("AUTO_EMBED_K_SEARCH_MAX", "10")
+    calc.setProperty("AUTO_EMBED_TAU_SEARCH_MAX", "20")
+    # 3. Initialise the calculator for (re-)use:
+    calc.initialise()
+    # 4. Supply the sample data:
+    calc.startAddObservations()
+    for s, d in zip(sourceArray, destArray):
+        calc.addObservations(JArray(JDouble, 1)(s), JArray(JDouble, 1)(d))
+    calc.finaliseAddObservations()
+
+    calc.setProperty(calcClass.K_PROP_NAME, str(k_hist))
+    calc.setProperty(calcClass.K_TAU_PROP_NAME, str(k_tau))
+
+    # 5. Compute the estimate:
+    result = calc.computeAverageLocalOfObservations()
+
+    print("TE_Kraskov (KSG)(s -> d) = %.4f nats" %(result))
+    
+    # 6. Check the auto-selected parameters and print out the result:
+    optimisedL = int(str(calc.getProperty(calcClass.L_PROP_NAME)))
+    optimisedLTau = int(str(calc.getProperty(calcClass.L_TAU_PROP_NAME)))
+
+    # print('optimisedK (fake) = ', optimisedK, '\toptimisedKTau (fake) = ', optimisedKTau)
+    # print('optimisedL = ', optimisedL, '\toptimisedLTau = ', optimisedLTau)
+
+    return optimisedL, optimisedLTau
+
+
+def optim_delay_u(sourceArray=[], destArray=[], k_hist=1, k_tau=1, l_hist=1, l_tau=1, u=0):
+    # 1. Construct the calculator:
+    calcClass = JPackage("infodynamics.measures.continuous.kraskov").TransferEntropyCalculatorKraskov
+    calc = calcClass()
+    # 2. Set any properties to non-default values:
+    # calc.setProperty("USE_GPU", "true")
+    calc.setProperty(calcClass.K_PROP_NAME, str(k_hist))
+    calc.setProperty(calcClass.K_TAU_PROP_NAME, str(k_tau))
+    calc.setProperty(calcClass.L_PROP_NAME, str(l_hist))
+    calc.setProperty(calcClass.L_TAU_PROP_NAME, str(l_tau))    
+    calc.setProperty("DELAY", str(u))
+    # 3. Initialise the calculator for (re-)use:
+    calc.initialise()
+    # 4. Supply the sample data:
+    calc.startAddObservations()
+    for s, d in zip(sourceArray, destArray):
+        calc.addObservations(JArray(JDouble, 1)(s), JArray(JDouble, 1)(d))
+    calc.finaliseAddObservations()
+
+    # 5. Compute the estimate:
+    result = calc.computeAverageLocalOfObservations()
+
+    # print('\n\nwith u = ', u)
+    # print("TE_Kraskov (KSG)(s -> d) = %.4f nats" %(result))
+
     return result
