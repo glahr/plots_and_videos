@@ -11,7 +11,7 @@ from filterpy.kalman import KalmanFilter
 from filterpy.common import Q_discrete_white_noise
 from cycler import cycler
 import palettable
-from palettable.cartocolors.qualitative import Safe_10 as myc
+from palettable.cartocolors.qualitative import Vivid_10 as myc
 from scipy.signal import find_peaks as peaks
 from data_class import DataClass
 import matplotlib.animation as animation
@@ -27,13 +27,13 @@ chosen_exps = {'fp-kh': 26, 'fp-kl': 25, 'vm-kl': 7, 'vm-kh': 3, 'vm-sic': 9,'vm
 # chosen_exps_joints = [11, 13, 14, 17]
 chosen_exps_joints = [11, 13, 14, 17]
 
-
-path_folder = 'data/'
+p = os.getcwd()
+path_folder = 'tro2023/data/'
 files_names = os.listdir(path=path_folder)
 files_names.sort()
 
 dh = DataPlotHelper(path_folder=path_folder, files_names=files_names)
-data_info = pd.read_csv('data_info.csv')
+data_info = pd.read_csv(p+'/tro2023/data_info.csv')
 
 params = {
     'idx': 1,
@@ -1327,7 +1327,10 @@ def plot_zoom_position_single_plot():
     fig.savefig('images/1d_pos_comparison.png', dpi=400, bbox_inches='tight')
 
 def plot_best_2d():
-    chosen_exps = [19, 21, 22, 23]
+    # chosen_exps = [19, 21, 22, 23]
+    chosen_exps = {'2d-1': 19, '2d-2': 21, '2d-rmm-1': 22, '2d-rmm-2': 23}
+    data_2d = {k: DataClass() for k in chosen_exps.keys()}
+
     n_exps = len(chosen_exps)
     gray_cycler = (cycler(color=["#000000", "#333333", "#666666", "#999999", "#cccccc"]) +
                     cycler(linestyle=["-", "--", "-.", ":", "-"]))
@@ -1373,9 +1376,8 @@ def plot_best_2d():
     n_joints = 7
 
     for j, idx_exp in enumerate(chosen_exps):
-        
-        file_name = dh._get_name(idx_exp)
-        print(file_name)
+        data_2d[idx_exp].file_name = dh._get_name(chosen_exps[idx_exp])
+        print(data_2d[idx_exp].file_name)
         if j == 0:
             offset_2d = -38
         if j == 1:
@@ -1384,25 +1386,26 @@ def plot_best_2d():
             offset_2d = -20
         if j == 3:
             offset_2d = -10
+        
+        data_2d[idx_exp].params = params
+        data_2d[idx_exp].params['idx_initial'] = dh.get_idx_from_file(chosen_exps[idx_exp], data_info, idx_name='idx_start')-100+offset_2d
+        data_2d[idx_exp].params['idx_end'] = dh.get_idx_from_file(chosen_exps[idx_exp], data_info, idx_name='idx_end')+200
 
-        params['idx_initial'] = dh.get_idx_from_file(idx_exp, data_info, idx_name='idx_start')-100+offset_2d
-        params['idx_end'] = dh.get_idx_from_file(idx_exp, data_info, idx_name='idx_end')+200
+        data_2d[idx_exp].time = dh.get_data(file_name=data_2d[idx_exp].file_name,params=data_2d[idx_exp].params, data_to_plot='time')
+        data_2d[idx_exp].time -= data_2d[idx_exp].time[0]
 
-        time = dh.get_data(file_name=file_name,params=params, data_to_plot='time')
-        time -= time[0]
-
-        ft_ = dh.get_data(file_name=file_name, params=params, data_to_plot='ft_')
+        data_2d[idx_exp].ft_ = dh.get_data(file_name=data_2d[idx_exp].file_name, params=data_2d[idx_exp].params, data_to_plot='ft_')
         # ax[idx_ft][j].plot(time, ft_, colors[i], linewidth=lw, label=legend_ft[i])
-        ax[idx_ft][j].plot(time, ft_[:,2], linewidth=lw, label=legend_ft[i])
+        ax[idx_ft][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].ft_[:,2], linewidth=lw, label=legend_ft[i])
         # ax[idx_ft][j].plot(time, -np.linalg.norm(ft_[:,:3], axis=1), linewidth=lw, label=legend_ft[i])
         ax[idx_ft][j].set_xlim(xlimits_2d)
         ax[idx_ft][j].set_ylim(ylimits_ft)
         # ax[idx_ft][j].legend(prop={'size': 8}, loc='lower right')
 
-        idx_impact = np.where(ft_ < -3)[0][0]-3
-        idx_finish_analysis = np.where(time > 1.5)[0][0]
+        idx_impact = np.where(data_2d[idx_exp].ft_ < -3)[0][0]-3
+        idx_finish_analysis = np.where(data_2d[idx_exp].time > 1.5)[0][0]
         
-        Kp = dh.get_data(params, file_name=file_name, data_to_plot='Kp')
+        data_2d[idx_exp].Kp = dh.get_data(data_2d[idx_exp].params, file_name=data_2d[idx_exp].file_name, data_to_plot='Kp')
         # ax[j][idx_Kp].plot(time, Kp, colors[i], linewidth=lw, label=legend_Kp[i])
         # ax[j][idx_Kp].plot(time, Kp, colors[i], linewidth=lw)
         offset = 0 if j != 3 else 10
@@ -1415,40 +1418,40 @@ def plot_best_2d():
             offset_kp = 70
         if j == 3:
             offset_kp = 40
-        ax[idx_Kp][j].plot(time[offset_kp:]-time[offset_kp], Kp[offset_kp:,2]-offset+10, linewidth=lw, label='$K_{p_z}$')
-        ax[idx_Kp][j].plot(time[offset_kp:]-time[offset_kp], Kp[offset_kp:,1]-offset+10, linewidth=lw, label='$K_{p_y}$')
+        ax[idx_Kp][j].plot(data_2d[idx_exp].time[offset_kp:]-data_2d[idx_exp].time[offset_kp], data_2d[idx_exp].Kp[offset_kp:,2]-offset+10, linewidth=lw, label='$K_{p_z}$')
+        ax[idx_Kp][j].plot(data_2d[idx_exp].time[offset_kp:]-data_2d[idx_exp].time[offset_kp], data_2d[idx_exp].Kp[offset_kp:,1]-offset+10, linewidth=lw, label='$K_{p_y}$')
         ax[idx_Kp][j].set_xlim(xlimits_2d)
         ax[idx_Kp][j].set_ylim(ylimits_Kp)
 
-        pos = dh.get_data(params, file_name=file_name, data_to_plot='EE_position')
-        pos_d = dh.get_data(params, file_name=file_name, data_to_plot='EE_position_d')
+        data_2d[idx_exp].pos = dh.get_data(data_2d[idx_exp].params, file_name=data_2d[idx_exp].file_name, data_to_plot='EE_position')
+        data_2d[idx_exp].pos_d = dh.get_data(data_2d[idx_exp].params, file_name=data_2d[idx_exp].file_name, data_to_plot='EE_position_d')
         # ax[j][idx_pos].plot(time, pos, colors[i], linewidth=lw, label=legend_pos[i])
-        ax[idx_pos_z][j].plot(time, pos[:,2], linewidth=lw, label=legend_pos[i])
-        ax[idx_pos_z][j].plot(time, pos_d[:,2], 'k--', linewidth=lw-0.5, label=legend_pos[i][:-1]+'_d$', alpha=0.6)
-        ax[idx_pos_y][j].plot(time, pos[:,1], linewidth=lw, label=legend_pos[i+1])
-        ax[idx_pos_y][j].plot(time, pos_d[:,1], 'k--', linewidth=lw-0.5, label=legend_pos[i+1][:-1]+'_d$', alpha=0.6)
+        ax[idx_pos_z][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].pos[:,2], linewidth=lw, label=legend_pos[i])
+        ax[idx_pos_z][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].pos_d[:,2], 'k--', linewidth=lw-0.5, label=legend_pos[i][:-1]+'_d$', alpha=0.6)
+        ax[idx_pos_y][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].pos[:,1], linewidth=lw, label=legend_pos[i+1])
+        ax[idx_pos_y][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].pos_d[:,1], 'k--', linewidth=lw-0.5, label=legend_pos[i+1][:-1]+'_d$', alpha=0.6)
         ax[idx_pos_z][j].set_xlim(xlimits_2d)
         ax[idx_pos_z][j].set_ylim(ylimits_pos_z)
         ax[idx_pos_y][j].set_xlim(xlimits_2d)
         ax[idx_pos_y][j].set_ylim(ylimits_pos_y)
         
-        vel = dh.get_data(params, file_name=file_name, data_to_plot='EE_twist')
-        vel_d = dh.get_data(params, file_name=file_name, data_to_plot='EE_twist_d')
+        data_2d[idx_exp].vel = dh.get_data(data_2d[idx_exp].params, file_name=data_2d[idx_exp].file_name, data_to_plot='EE_twist')
+        data_2d[idx_exp].vel_d = dh.get_data(data_2d[idx_exp].params, file_name=data_2d[idx_exp].file_name, data_to_plot='EE_twist_d')
         # ax[j][idx_vel].plot(time, vel, colors[i], linewidth=lw, label=legend_vel[i])
-        ax[idx_vel_z][j].plot(time, vel[:,2], linewidth=lw, label=legend_vel[i])
-        ax[idx_vel_z][j].plot(time, vel_d[:,2], 'k--', linewidth=lw-0.5, label=legend_vel[i][:-1]+'_d$', alpha=0.6)
-        ax[idx_vel_y][j].plot(time, vel[:,1], linewidth=lw, label=legend_vel[i+1])
-        ax[idx_vel_y][j].plot(time, vel_d[:,1], 'k--', linewidth=lw-0.5, label=legend_vel[i+1][:-1]+'_d$', alpha=0.6)
+        ax[idx_vel_z][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].vel[:,2], linewidth=lw, label=legend_vel[i])
+        ax[idx_vel_z][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].vel_d[:,2], 'k--', linewidth=lw-0.5, label=legend_vel[i][:-1]+'_d$', alpha=0.6)
+        ax[idx_vel_y][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].vel[:,1], linewidth=lw, label=legend_vel[i+1])
+        ax[idx_vel_y][j].plot(data_2d[idx_exp].time, data_2d[idx_exp].vel_d[:,1], 'k--', linewidth=lw-0.5, label=legend_vel[i+1][:-1]+'_d$', alpha=0.6)
         ax[idx_vel_z][j].set_xlim(xlimits_2d)
         ax[idx_vel_z][j].set_ylim(ylimits_vel_z)
         ax[idx_vel_y][j].set_xlim(xlimits_2d)
         ax[idx_vel_y][j].set_ylim(ylimits_vel_y)
 
-        pos_ball = dh.get_data(params, file_name=file_name, data_to_plot='ball_pose_')
+        data_2d[idx_exp].pos_ball = dh.get_data(data_2d[idx_exp].params, file_name=data_2d[idx_exp].file_name, data_to_plot='ball_pose_')
         # apply KF
-        z_actual_hat, z_dot_actual_hat, z_intersec, z_dot_intersec, \
-            y_actual_hat, y_dot_actual_hat, y_intersec, y_dot_intersec,\
-                time_intersec, time_f = kalman_filtering_2d(time, pos_ball[:,2], pos_ball[:,1], ft_)
+        data_2d[idx_exp].z_actual_hat, data_2d[idx_exp].z_dot_actual_hat, data_2d[idx_exp].z_intersec, data_2d[idx_exp].z_dot_intersec, \
+            data_2d[idx_exp].y_actual_hat, data_2d[idx_exp].y_dot_actual_hat, data_2d[idx_exp].y_intersec, data_2d[idx_exp].y_dot_intersec,\
+                data_2d[idx_exp].time_intersec, data_2d[idx_exp].time_f = kalman_filtering_2d(data_2d[idx_exp].time, data_2d[idx_exp].pos_ball[:,2], data_2d[idx_exp].pos_ball[:,1], data_2d[idx_exp].ft_)
         # ax[idx_pos][j].plot(time, pos_ball[:,2], 'r', linewidth=lw, label=legend_pos[i])
         if j == 0:
             final_ball_traj = -5
@@ -1458,91 +1461,91 @@ def plot_best_2d():
             final_ball_traj = -4
         if j == 3:
             final_ball_traj = -3
-        ax[idx_pos_z][j].plot(time_f[:final_ball_traj], z_actual_hat[:final_ball_traj]-ball_radius, color='b', linestyle='dashdot', linewidth=lw-0.5, label='$z_b$')
-        ax[idx_vel_z][j].plot(time_f[:final_ball_traj], z_dot_actual_hat[:final_ball_traj], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$\dot{z}_b$')
-        ax[idx_pos_y][j].plot(time_f[:final_ball_traj], y_actual_hat[:final_ball_traj]-ball_radius, color='b', linestyle='dashdot', linewidth=lw-0.5, label='$y_b$')
-        ax[idx_vel_y][j].plot(time_f[:final_ball_traj], y_dot_actual_hat[:final_ball_traj], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$\dot{y}_b$')
+        ax[idx_pos_z][j].plot(data_2d[idx_exp].time_f[:final_ball_traj], data_2d[idx_exp].z_actual_hat[:final_ball_traj]-ball_radius, color='b', linestyle='dashdot', linewidth=lw-0.5, label='$z_b$')
+        ax[idx_vel_z][j].plot(data_2d[idx_exp].time_f[:final_ball_traj], data_2d[idx_exp].z_dot_actual_hat[:final_ball_traj], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$\dot{z}_b$')
+        ax[idx_pos_y][j].plot(data_2d[idx_exp].time_f[:final_ball_traj], data_2d[idx_exp].y_actual_hat[:final_ball_traj]-ball_radius, color='b', linestyle='dashdot', linewidth=lw-0.5, label='$y_b$')
+        ax[idx_vel_y][j].plot(data_2d[idx_exp].time_f[:final_ball_traj], data_2d[idx_exp].y_dot_actual_hat[:final_ball_traj], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$\dot{y}_b$')
 
         
         # ax_yz[j].plot(y_actual_hat-(95/2/1000), z_actual_hat-(95/2/1000), color='#000000', linestyle='dashdot', linewidth=lw-0.5)
         # ax_yz[j].plot(pos[:,1], pos[:,2], linewidth=lw)
         
-        ax[idx_pos_yz][j].plot(y_actual_hat[:final_ball_traj]-ball_radius, z_actual_hat[:final_ball_traj]-ball_radius, color='b', linestyle='dashdot', linewidth=lw-.5)
-        ax[idx_pos_yz][j].plot(pos[:,1], pos[:,2], linewidth=lw)
+        ax[idx_pos_yz][j].plot(data_2d[idx_exp].y_actual_hat[:final_ball_traj]-ball_radius, data_2d[idx_exp].z_actual_hat[:final_ball_traj]-ball_radius, color='b', linestyle='dashdot', linewidth=lw-.5)
+        ax[idx_pos_yz][j].plot(data_2d[idx_exp].pos[:,1], data_2d[idx_exp].pos[:,2], linewidth=lw)
 
-        ax[idx_pos_yz][j].add_patch(Ellipse((y_actual_hat[final_ball_traj]-ball_radius, z_actual_hat[final_ball_traj]-ball_radius), 2*ball_radius/5+0.025, 2*ball_radius, color='b', fill=False))
-        ax[idx_pos_z][j].add_patch(Ellipse((time_f[final_ball_traj], z_actual_hat[final_ball_traj]-ball_radius), 2*ball_radius/5+0.025, 2*ball_radius, color='b', fill=False))
-        ax[idx_pos_y][j].add_patch(Ellipse((time_f[final_ball_traj], y_actual_hat[final_ball_traj]-ball_radius), 2*ball_radius/5+0.025, 4*ball_radius, color='b', fill=False))
+        ax[idx_pos_yz][j].add_patch(Ellipse((data_2d[idx_exp].y_actual_hat[final_ball_traj]-ball_radius, data_2d[idx_exp].z_actual_hat[final_ball_traj]-ball_radius), 2*ball_radius/5+0.025, 2*ball_radius, color='b', fill=False))
+        ax[idx_pos_z][j].add_patch(Ellipse((data_2d[idx_exp].time_f[final_ball_traj], data_2d[idx_exp].z_actual_hat[final_ball_traj]-ball_radius), 2*ball_radius/5+0.025, 2*ball_radius, color='b', fill=False))
+        ax[idx_pos_y][j].add_patch(Ellipse((data_2d[idx_exp].time_f[final_ball_traj], data_2d[idx_exp].y_actual_hat[final_ball_traj]-ball_radius), 2*ball_radius/5+0.025, 4*ball_radius, color='b', fill=False))
 
-        tau_m = dh.get_data(params, file_name=file_name, data_to_plot='tau_measured')
-        tau_m_norm = np.divide(tau_m, tau_limits)
+        data_2d[idx_exp].tau_m = dh.get_data(params, file_name=data_2d[idx_exp].file_name, data_to_plot='tau_measured')
+        data_2d[idx_exp].tau_m_norm = np.divide(data_2d[idx_exp].tau_m, tau_limits)
         # ax[idx_tau][j].plot(time, tau_m_norm, label=['$\\tau_'+str(i+1)+'$' for i in range(7)])
         colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2"]#, "#7f7f7f", "#bcbd22", "#17becf"]        
         joint_i = 0
-        for tau_i, c  in zip(tau_m_norm.T, colors):
-            ax[idx_tau][j].plot(time, tau_i, label='$\\tau_'+str(joint_i+1)+'$', color=c, linestyle='-')
+        for tau_i, c  in zip(data_2d[idx_exp].tau_m_norm.T, colors):
+            ax[idx_tau][j].plot(data_2d[idx_exp].time, tau_i, label='$\\tau_'+str(joint_i+1)+'$', color=c, linestyle='-')
             joint_i +=1 
         ax[idx_tau][j].set_xlim(xlimits_2d)
         ax[idx_tau][j].set_ylim([-1, 1])      
 
         # JOINT MEASUREMENTS
-        tau_adim = 0
-        tau_max = np.zeros((n_joints))
-        tau_rms = np.zeros((n_joints))
-        tau_d_rms = np.zeros((n_joints))
-        tau_m = dh.get_data(file_name=file_name, params=params, data_to_plot='tau_measured')[idx_impact:idx_finish_analysis]
-        tau_d = dh.get_data(file_name=file_name, params=params, data_to_plot='tau')[idx_impact:idx_finish_analysis]
-        q_dot = dh.get_data(file_name=file_name, params=params, data_to_plot='dq')[idx_impact:idx_finish_analysis]
-        tau_norm = np.zeros_like(tau_m)
-        tau_norm = np.divide(tau_m, tau_limits)
-        tau_max = np.max(np.abs(tau_norm.T), axis=1)
-        tau_d_norm = np.zeros_like(tau_d)
-        tau_d_norm = np.divide(tau_d, tau_limits)
+        data_2d[idx_exp].tau_adim = 0
+        data_2d[idx_exp].tau_max = np.zeros((n_joints))
+        data_2d[idx_exp].tau_rms = np.zeros((n_joints))
+        data_2d[idx_exp].tau_d_rms = np.zeros((n_joints))
+        data_2d[idx_exp].tau_m = dh.get_data(file_name=data_2d[idx_exp].file_name, params=data_2d[idx_exp].params, data_to_plot='tau_measured')[idx_impact:idx_finish_analysis]
+        data_2d[idx_exp].tau_d = dh.get_data(file_name=data_2d[idx_exp].file_name, params=data_2d[idx_exp].params, data_to_plot='tau')[idx_impact:idx_finish_analysis]
+        data_2d[idx_exp].q_dot = dh.get_data(file_name=data_2d[idx_exp].file_name, params=data_2d[idx_exp].params, data_to_plot='dq')[idx_impact:idx_finish_analysis]
+        data_2d[idx_exp].tau_norm = np.zeros_like(data_2d[idx_exp].tau_m)
+        data_2d[idx_exp].tau_norm = np.divide(data_2d[idx_exp].tau_m, tau_limits)
+        data_2d[idx_exp].tau_max = np.max(np.abs(data_2d[idx_exp].tau_norm.T), axis=1)
+        data_2d[idx_exp].tau_d_norm = np.zeros_like(data_2d[idx_exp].tau_d)
+        data_2d[idx_exp].tau_d_norm = np.divide(data_2d[idx_exp].tau_d, tau_limits)
 
-        tau_rms = np.sqrt(np.mean(tau_norm**2, axis=0)/(time[idx_finish_analysis]-time[idx_impact]))
-        tau_d_rms = np.sqrt(np.mean(tau_d_norm**2, axis=0)/(time[idx_finish_analysis]-time[idx_impact]))
-        tau_rms_sum = np.sum(tau_rms)
+        data_2d[idx_exp].tau_rms = np.sqrt(np.mean(data_2d[idx_exp].tau_norm**2, axis=0)/(data_2d[idx_exp].time[idx_finish_analysis]-data_2d[idx_exp].time[idx_impact]))
+        data_2d[idx_exp].tau_d_rms = np.sqrt(np.mean(data_2d[idx_exp].tau_d_norm**2, axis=0)/(data_2d[idx_exp].time[idx_finish_analysis]-data_2d[idx_exp].time[idx_impact]))
+        data_2d[idx_exp].tau_rms_sum = np.sum(data_2d[idx_exp].tau_rms)
 
         # ADIM
-        w_fd = dh.get_data(file_name=file_name, params=params, data_to_plot='m_arm')
-        T_ = time[idx_finish_analysis]-time[idx_impact]
+        data_2d[idx_exp].w_fd = dh.get_data(file_name=data_2d[idx_exp].file_name, params=data_2d[idx_exp].params, data_to_plot='m_arm')
+        T_ = data_2d[idx_exp].time[idx_finish_analysis]-data_2d[idx_exp].time[idx_impact]
         idx_step = 0
-        time_aux = time[0:idx_finish_analysis]
-        w_fd = w_fd[0:idx_finish_analysis]
+        time_aux = data_2d[idx_exp].time[0:idx_finish_analysis]
+        data_2d[idx_exp].w_fd = data_2d[idx_exp].w_fd[0:idx_finish_analysis]
         while time_aux[idx_step] <= T_:
             if idx_step > 1:
-                tau_adim += (w_fd[idx_step] + w_fd[idx_step-1])*(time_aux[idx_step] - time_aux[idx_step-1])/2
+                data_2d[idx_exp].tau_adim += (data_2d[idx_exp].w_fd[idx_step] + data_2d[idx_exp].w_fd[idx_step-1])*(time_aux[idx_step] - time_aux[idx_step-1])/2
             idx_step += 1
-            if idx_step+1 >= len(w_fd):
+            if idx_step+1 >= len(data_2d[idx_exp].w_fd):
                 break
-        tau_adim = tau_adim/T_
+        data_2d[idx_exp].tau_adim = data_2d[idx_exp].tau_adim/T_
 
         # METRICS
-        ft_ = ft_[:,2]
+        data_2d[idx_exp].ft_ = data_2d[idx_exp].ft_[:,2]
         # pos = pos[:,2]
         # vel = vel[:,2]
-        loi = LOI(time, ft_, idx_impact, idx_finish_analysis, file_name)
-        Fmax = -np.min(ft_)
+        data_2d[idx_exp].loi = LOI(data_2d[idx_exp].time, data_2d[idx_exp].ft_, idx_impact, idx_finish_analysis, data_2d[idx_exp].file_name)
+        data_2d[idx_exp].Fmax = -np.min(data_2d[idx_exp].ft_)
         # Fmax = np.max(np.linalg.norm(ft_[:,:3], axis=1))
         # vme = vel[idx_impact] - z_dot_actual_hat[-1]
-        vme = np.linalg.norm(np.array([y_dot_actual_hat[-1], z_dot_actual_hat[-1]])-vel[idx_impact][1:3])
+        data_2d[idx_exp].vme = np.linalg.norm(np.array([data_2d[idx_exp].y_dot_actual_hat[-1], data_2d[idx_exp].z_dot_actual_hat[-1]])-data_2d[idx_exp].vel[idx_impact][1:3])
         # pos_error = np.linalg.norm(np.array([pos_d[idx_impact][1], 0.35]) - pos[idx_impact][1:3])
-        pos_error = np.linalg.norm(pos_d[idx_impact][1:3] - pos[idx_impact][1:3])
-        dri = DRI(time, ft_, file_name)
-        bti = BTI(time, ft_, file_name)
+        data_2d[idx_exp].pos_error = np.linalg.norm(data_2d[idx_exp].pos_d[idx_impact][1:3] - data_2d[idx_exp].pos[idx_impact][1:3])
+        data_2d[idx_exp].dri = DRI(data_2d[idx_exp].time, data_2d[idx_exp].ft_, data_2d[idx_exp].file_name)
+        data_2d[idx_exp].bti = BTI(data_2d[idx_exp].time, data_2d[idx_exp].ft_, data_2d[idx_exp].file_name)
 
-        print(file_name,   '\tLOI =',           loi,
-                           '\tDRI = ',          dri,
-                           '\tBTI = ',          bti,
-                           '\tF_max = ',        Fmax,
-                           '\tVM-error = ',     vme,
-                           '\tE_pos_impact = ', pos_error,
-                           '\tball_max_pos = ', np.max(z_actual_hat),
-                           '\tball_delta_y = ', y_actual_hat[-1]-y_actual_hat[0],
-                           "\tTAU ADIM = ",     tau_adim,
-                           "\tTAU MAX = ",      np.max(tau_max),
-                           "\tTAU RMS SUM = ",  tau_rms_sum,
-                           "\n")
+        print(data_2d[idx_exp].file_name,   '\tLOI =',           data_2d[idx_exp].loi,
+                                            '\tDRI = ',          data_2d[idx_exp].dri,
+                                            '\tBTI = ',          data_2d[idx_exp].bti,
+                                            '\tF_max = ',        data_2d[idx_exp].Fmax,
+                                            '\tVM-error = ',     data_2d[idx_exp].vme,
+                                            '\tE_pos_impact = ', data_2d[idx_exp].pos_error,
+                                            '\tball_max_pos = ', np.max(data_2d[idx_exp].z_actual_hat),
+                                            '\tball_delta_y = ', data_2d[idx_exp].y_actual_hat[-1]-data_2d[idx_exp].y_actual_hat[0],
+                                            "\tTAU ADIM = ",     data_2d[idx_exp].tau_adim,
+                                            "\tTAU MAX = ",      np.max(data_2d[idx_exp].tau_max),
+                                            "\tTAU RMS SUM = ",  data_2d[idx_exp].tau_rms_sum,
+                                            "\n")
         
 
     for j, ax_ in enumerate(ax):
@@ -1732,9 +1735,10 @@ def plot_best_2d():
     # print('\nVM-VIC-DIM1 metrics:','\tCatching time delay = ', 0.750-.631)
     # print('\nVM-VIC-DIM2 metrics:','\tCatching time delay = ', 0.6979-.631)
 
-    plt.show()
+    # plt.show()
     fig.savefig('images/2d-time-plots.png', dpi=400, bbox_inches='tight')
     # fig_yz.savefig('images/2d_spatial.png')
+    return data_2d
 
 def plot_rmm_1d_all_in_one_4_plots():
     # colors = ['b', 'r', 'g', 'y']
@@ -2001,8 +2005,8 @@ def plot_rmm_1d_1_plot():
         vel = dh.get_data(params, file_name=file_name, data_to_plot='EE_twist')[:,2]
         if i == 0:
             vel_d = dh.get_data(params, file_name=file_name, data_to_plot='EE_twist_d')[:,2]
-            idx_impact = np.where(pos_d < 0.382)[0][0]
-            vel_d[idx_impact:] = np.zeros_like(vel_d[idx_impact:])
+            # idx_impact = np.where(pos_d < 0.382)[0][0]
+            # vel_d[idx_impact:] = np.zeros_like(vel_d[idx_impact:])
         else:
             vel_d = dh.get_data(params, file_name=file_name, data_to_plot='EE_twist_d')[:,2]
         ax[idx_vel].plot(time, vel, color=colors[i], linewidth=lw, label=legend_vel[i])
@@ -2109,7 +2113,7 @@ def plot_rmm_1d_1_plot():
     ax[-1].axvline(x = 0.293, ymin=0, ymax=6, linestyle='--', linewidth=1.1, color = 'r', label = '_nolegend_', clip_on=False)
 
     plt.show()
-    fig.savefig('images/1d_plots_dim.png', dpi=400, bbox_inches='tight')
+    fig.savefig('tro2023/images/1d_plots_dim.png', dpi=400, bbox_inches='tight')
 
 def plot_rmm_1d_1_plot_with_without_dim():
     # colors = ['b', 'r', 'g', 'y']
@@ -2739,10 +2743,12 @@ def plots_joints_max_torque_without_KH():
 
         # print(file_name, '\tF_max = ', np.max(np.abs(ft_)))
         tau_norm = np.zeros_like(tau_m)
-        tau_norm = np.divide(tau_m, tau_limits)
+        # tau_norm = np.divide(tau_m, tau_limits)
+        tau_norm = tau_m
         tau_max[:,j] = np.max(np.abs(tau_norm.T), axis=1)
         # TAU MAX
-        print("TAU MAX = ", np.max(tau_max))
+        # print("TAU MAX = ", np.max(np.abs(tau_max)))
+        print("TAU MAX = ", np.max(np.abs(tau_m)))
 
         tau_d_norm = np.zeros_like(tau_d)
         tau_d_norm = np.divide(tau_d, tau_limits)
@@ -2844,8 +2850,10 @@ def plots_joints_max_torque_without_KH():
             x = aux.get_xdata()
             y = aux.get_ydata()
             ax_1d_joints[0].fill_betweenx(y, 0, x, alpha=0.15,color=c, label='_nolegend_')
-            ax_1d_joints[0].set_yticks([0.25, 0.5, 0.75, 1.0])
-            ax_1d_joints[0].set_yticklabels(['', '$0.5$', '', '$1$'], fontsize=fs)
+            # ax_1d_joints[0].set_yticks([0.25, 0.5, 0.75, 1.0])
+            ax_1d_joints[0].set_yticks([0, 5, 10, 15, 20, 25, 30])
+            # ax_1d_joints[0].set_yticklabels(['', '$0.5$', '', '$1$'], fontsize=fs)
+            ax_1d_joints[0].set_yticklabels(['', '', '$10$', '', '$20$', '', '$30$'], fontsize=fs)
             ax_1d_joints[0].set_xticks(theta)
             ax_1d_joints[0].set_xticklabels(['$\\tau_'+str(q+1)+'$' for q in [0, 1, 2, 3, 4, 5, 6, 0]])
 
@@ -2872,8 +2880,9 @@ def plots_joints_max_torque_without_KH():
             x = aux.get_xdata()
             y = aux.get_ydata()
             ax_1d_joints[0].fill_betweenx(y, 0, x, alpha=0.15,color=c, label='_nolegend_')
-            ax_1d_joints[0].set_yticks([0.25, 0.5, 0.75, 1.0])
-            ax_1d_joints[0].set_yticklabels(['', '$0.5$', '', '$1$'], fontsize=fs)
+            # ax_1d_joints[0].set_yticks([0.25, 0.5, 0.75, 1.0])
+            # ax_1d_joints[0].set_yticks([0, 10, 15, 20])
+            # ax_1d_joints[0].set_yticklabels(['', '$10$', '', '$20$'], fontsize=fs)
             ax_1d_joints[0].set_xticks(theta)
             ax_1d_joints[0].set_xticklabels(['$\\tau_'+str(q+1)+'$' for q in [0, 1, 2, 3, 4, 5, 6, 0]])
 
@@ -2882,8 +2891,14 @@ def plots_joints_max_torque_without_KH():
             x = aux.get_xdata()
             y = aux.get_ydata()
             ax_1d_joints[1].fill_betweenx(y, 0, x, alpha=0.15,color=c, label='_nolegend_')
-            ax_1d_joints[1].set_yticks([0.15, 0.3, 0.4])
-            ax_1d_joints[1].set_yticklabels(['$0.15$', '$0.3$',''], fontsize=fs)
+            # ax_1d_joints[1].set_yticks([0.15, 0.3, 0.4])
+            # ax_1d_joints[1].set_yticklabels(['$0.15$', '$0.3$',''], fontsize=fs)
+            # ax_1d_joints[1].set_yticks([0, 5, 10, 15, 20])
+            # ax_1d_joints[1].set_yticklabels(['', '', '$10$', '', '$20$'], fontsize=fs)
+            # ax_1d_joints[0].set_yticks([0.25, 0.5, 0.75, 1.0])
+            ax_1d_joints[1].set_yticks([0, 5, 10, 15, 20, 25, 30])
+            # ax_1d_joints[0].set_yticklabels(['', '$0.5$', '', '$1$'], fontsize=fs)
+            ax_1d_joints[1].set_yticklabels(['', '', '$10$', '', '$20$', '', '$30$'], fontsize=fs)
             ax_1d_joints[1].set_xticks(theta)
             ax_1d_joints[1].set_xticklabels(['$\\tau_'+str(q+1)+'$' for q in [0, 1, 2, 3, 4, 5, 6, 0]])
 
@@ -2906,9 +2921,9 @@ def plots_joints_max_torque_without_KH():
     #     for ax__ in ax_:
     #         ax__.grid()
 
-    ax_1d_joints[0].set_title('$\\hat{\\boldsymbol{\\tau}}_{max}$')
+    ax_1d_joints[0].set_title('${\\boldsymbol{\\tau}}_{max}$')
     ax_1d_joints[0].yaxis.set_label_coords(-0.125, 0.5)
-    ax_1d_joints[1].set_title('$\\hat{\\boldsymbol{\\tau}}_{RMS}$')
+    ax_1d_joints[1].set_title('${\\boldsymbol{\\tau}}_{RMS}$')
     # ax[1][0].set_ylabel('$\\hat{\\tau}_{RMS}/\\hat{\\tau}^{d}_{RMS}$')
     ax_1d_joints[1].yaxis.set_label_coords(-0.125, 0.5)
 
@@ -2916,7 +2931,11 @@ def plots_joints_max_torque_without_KH():
     # for ax_ in ax:
     #     for ax__ in ax_:
     #         ax__.set_ylim(0,1)
-    ax_1d_joints[0].set_ylim(0,1.15)
+    ax_1d_joints[0].set_ylim(0,30)
+    ax_1d_joints[1].set_ylim(0,30)
+
+    ax_1d_joints[0].set_rlabel_position(5)
+    ax_1d_joints[1].set_rlabel_position(5)
     # ax[1].set_ylim(0,1.15)
 
     # fig.legend(legends[:2], loc='upper center',bbox_to_anchor=(.5,-0.1), bbox_transform=fig.transFigure)
@@ -3941,6 +3960,9 @@ def generate_videos_1d(data_1d):
         plots_twist.set_data(data_1d[key_exp].time[:idx], data_1d[key_exp].vel[:idx])
         plots_pos.set_data(data_1d[key_exp].time[:idx], data_1d[key_exp].pos[:idx])
 
+        plots_twist_d.set_data(data_1d[key_exp].time[:idx], data_1d[key_exp].vel_d[:idx])
+        plots_pos_d.set_data(data_1d[key_exp].time[:idx], data_1d[key_exp].pos_d[:idx])
+
         # if data_1d[key_exp].time_f[0] < data_1d[key_exp].time[idx] and data_1d[key_exp].time_f[-1] > data_1d[key_exp].time[idx]:
         #     plots_pos_ball.set_data(data_1d[key_exp].time_f[:(j-j_init_ball)*STEP], data_1d[key_exp].z_actual_hat[:(j-j_init_ball)*STEP])
         #     plots_twist_ball.set_data(data_1d[key_exp].time_f[:(j-j_init_ball)*STEP], data_1d[key_exp].z_dot_actual_hat[:(j-j_init_ball)*STEP])
@@ -3987,6 +4009,10 @@ def generate_videos_1d(data_1d):
         ax[1].set_xticks([])
         ax[2].set_xticks([])
         # ax[3].set_xticks([])
+        ax[3].set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+        ax[3].set_xticklabels(['$0$', '$0.25$', '$0.5$', '$0.75$', '$1$'], size=13)
+        ax[3].set_xlabel('$Time~[s]$', size=15)
+
 
         x_grids = list(np.arange(0,2,0.25))
         alpha_grids = 0.12
@@ -4021,6 +4047,8 @@ def generate_videos_1d(data_1d):
         plots_k, = ax[idx_Kp].plot(data_1d[key_exp].time[0], data_1d[key_exp].Kp[0], linewidth=dh.lw, color='k')
         plots_twist, = ax[idx_vel].plot(data_1d[key_exp].time[0], data_1d[key_exp].vel[0], linewidth=dh.lw, color='k')
         plots_pos, = ax[idx_pos].plot(data_1d[key_exp].time[0], data_1d[key_exp].pos[0], linewidth=dh.lw, color='k')
+        plots_twist_d, = ax[idx_vel].plot(data_1d[key_exp].time[0], data_1d[key_exp].vel_d[0], linewidth=dh.lw-1, color='k', linestyle='--', alpha=0.6)
+        plots_pos_d, = ax[idx_pos].plot(data_1d[key_exp].time[0], data_1d[key_exp].pos_d[0], linewidth=dh.lw-1, color='k', linestyle='--', alpha=0.6)
 
         plots_pos_ball, = ax[idx_pos].plot(data_1d[key_exp].time_f[0], data_1d[key_exp].z_actual_hat[0], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$z_b$')
         plots_twist_ball, = ax[idx_vel].plot(data_1d[key_exp].time_f[0], data_1d[key_exp].z_dot_actual_hat[0], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$\dot{z}_b$')
@@ -4055,7 +4083,192 @@ def generate_videos_1d(data_1d):
         video_name = 'video_'+key_exp+'.mp4'
         ### creating and saving the video
         writervideo = animation.FFMpegWriter(fps=30)
-        animation_1.save(path_folder + video_name, writer=writervideo)
+        # animation_1.save('images/' + video_name, writer=writervideo)
+        plt.show()
+
+def generate_videos_2d(data_2d):
+    
+    def animate_video(j):
+        idx = j*STEP
+        if idx != 0:
+            plots_force.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].ft_[:idx])
+            plots_k.set_data(data_2d[key_exp].time[offset_kp:offset_kp+idx]-data_2d[key_exp].time[offset_kp], data_2d[key_exp].Kp[offset_kp:offset_kp+idx].T[2]+10)
+            plots_twist_y.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].vel[:idx].T[1])
+            plots_pos_y.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].pos[:idx].T[1])
+            plots_twist_z.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].vel[:idx].T[2])
+            plots_pos_z.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].pos[:idx].T[2])
+
+            plots_twist_y_d.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].vel_d[:idx].T[1])
+            plots_pos_y_d.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].pos_d[:idx].T[1])
+            plots_twist_z_d.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].vel_d[:idx].T[2])
+            plots_pos_z_d.set_data(data_2d[key_exp].time[:idx], data_2d[key_exp].pos_d[:idx].T[2])
+
+        # if data_2d[key_exp].time_f[0] < data_2d[key_exp].time[idx] and data_2d[key_exp].time_f[-1] > data_2d[key_exp].time[idx]:
+        #     plots_pos_ball.set_data(data_2d[key_exp].time_f[:(j-j_init_ball)*STEP], data_2d[key_exp].z_actual_hat[:(j-j_init_ball)*STEP])
+        #     plots_twist_ball.set_data(data_2d[key_exp].time_f[:(j-j_init_ball)*STEP], data_2d[key_exp].z_dot_actual_hat[:(j-j_init_ball)*STEP])
+    
+    ylimits_ft = [-20, 5]
+    ylimits_Kp = [0, 50]
+    ylimits_pos_z = [0.2, 0.8]
+    ylimits_vel_z = [-2, 2]
+    ylimits_pos_y = [-1.75, 0]
+    ylimits_vel_y = [-1, 4]
+
+    idx_pos_z = 0
+    idx_vel_z = 1
+    idx_pos_y = 2
+    idx_vel_y = 3
+    idx_ft = 4
+    idx_Kp = 5
+    add_lw = 1
+
+    legend_ft = [r'$F_z$' for _ in range(1)]
+    legend_Kp = [r'$K_H$' for _ in range(1)]
+    legend_pos = [r'$z$' for _ in range(1)]
+    legend_vel = [r'$\dot{z}$' for _ in range(1)]
+
+    chosen_exps = {'2d-1': 19, '2d-2': 21, '2d-rmm-1': 22, '2d-rmm-2': 23}
+    xlimits = [0, 1.5]
+    
+    for j, key_exp in enumerate(chosen_exps.keys()):
+        print(key_exp)
+        fig, ax = plt.subplots(6, figsize=(6, 10), layout="constrained")
+
+        ax[idx_ft].set_xlim(xlimits)
+        ax[idx_ft].set_ylim(ylimits_ft)
+
+        ax[idx_Kp].set_xlim(xlimits)
+        ax[idx_Kp].set_ylim(ylimits_Kp)
+
+        ax[idx_pos_z].set_xlim(xlimits)
+        ax[idx_pos_z].set_ylim(ylimits_pos_z)
+
+        ax[idx_pos_y].set_xlim(xlimits)
+        ax[idx_pos_y].set_ylim(ylimits_pos_y)
+
+        ax[idx_vel_z].set_xlim(xlimits)
+        ax[idx_vel_z].set_ylim(ylimits_vel_z)
+
+        ax[idx_vel_y].set_xlim(xlimits)
+        ax[idx_vel_y].set_ylim(ylimits_vel_y)
+
+        ax[idx_pos_z].set_ylabel('$z~[m]$')
+        ax[idx_vel_z].set_ylabel('$\dot{z}~[m/s]$')
+        ax[idx_pos_y].set_ylabel('$y~[m]$')
+        ax[idx_vel_y].set_ylabel('$\dot{y}~[m/s]$')
+        ax[idx_Kp].set_ylabel('$K_p$')
+        ax[idx_ft].set_ylabel('$F_z~[N]$')
+        fig.align_ylabels()
+
+        ax[0].set_xticks([])
+        ax[1].set_xticks([])
+        ax[2].set_xticks([])
+        ax[3].set_xticks([])
+        ax[4].set_xticks([])
+
+        aux = [0] + list(np.arange(0.25, 1.55, 0.25))
+        ax[5].set_xticks(aux)
+        ax[5].set_xticklabels(['$'+str(a)+'$' for a in aux], size=13)
+        ax[5].set_xlabel('$Time~[s]$', size=16)
+
+
+        x_grids = list(np.arange(0,2,0.25))
+        alpha_grids = 0.12
+        y_grids_ft = [-15, -10, -5, 0, 5]
+        y_grids_Kp = [0, 10, 20, 30, 40, 50]
+        y_grids_pos_z = [i for i in list(np.arange(0, 0.81, 0.1))]
+        y_grids_pos_y = [i for i in list(np.arange(-2, .01, 0.5))]
+        y_grids_vel_z = [i for i in list(np.arange(-3, 3, 1))]
+        y_grids_vel_y = [i for i in list(np.arange(0, 4.01, 1))]
+
+        if j == 0:
+            offset_kp = 90
+        if j == 1:
+            offset_kp = 40
+        if j == 2:
+            offset_kp = 70
+        if j == 3:
+            offset_kp = 40
+
+        for j, e in enumerate(ax):
+            [e.axvline(xg, color='k', alpha=alpha_grids) for xg in x_grids]
+            if idx_ft == j:
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_ft]
+                # e.axhline(0, color='k')
+                # e.set_yticks([0, -5, -15])
+                # e.set_yticklabels(['$0$', '$-5$', '$-15$'], size=13)
+                e.set_yticks([5, 0, -5, -10, -15, -20])
+                e.set_yticklabels(['$5$', '$0$', "$-5$", '$-10$', '$-15$', '$-20$'], size=13)
+            if idx_Kp == j:
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_Kp]
+                e.set_yticks([10, 20, 30, 40, 50])
+                e.set_yticklabels(['$10$', '$20$', '$30$', '$40$', '$50$'], size=13)
+            if idx_pos_z == j:
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_pos_z]
+                aux = [0.2, 0.4, 0.6, 0.8]
+                e.set_yticks(aux)
+                e.set_yticklabels(['$'+str(a)+'$' for a in aux], size=13)
+            if idx_vel_z == j:
+                e.set_yticks([-2, -1, 0, 1, 2])
+                e.set_yticklabels(['$-2$', '$-1$', '$0$', '$1$', '$2$'], size=13)
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_vel_z]
+            if idx_pos_y == j:
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_pos_y]
+                aux = [-1.5, -1, -0.5, 0]
+                e.set_yticks(aux)
+                e.set_yticklabels(['$'+str(a)+'$' for a in aux], size=13)
+            if idx_vel_y == j:
+                aux = [0, 1, 2, 3]
+                e.set_yticks(aux)
+                e.set_yticklabels(['$'+str(a)+'$' for a in aux], size=13)
+                [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_vel_y]
+
+        plots_force, = ax[idx_ft].plot(data_2d[key_exp].time[0], data_2d[key_exp].ft_[0], linewidth=dh.lw, color='k')
+        plots_k, = ax[idx_Kp].plot(data_2d[key_exp].time[0], data_2d[key_exp].Kp[0][2], linewidth=dh.lw, color='k')
+        plots_twist_y, = ax[idx_vel_y].plot(data_2d[key_exp].time[0], data_2d[key_exp].vel[0][1], linewidth=dh.lw, color='k')
+        plots_pos_y, = ax[idx_pos_y].plot(data_2d[key_exp].time[0], data_2d[key_exp].pos[0][1], linewidth=dh.lw, color='k')
+        plots_twist_z, = ax[idx_vel_z].plot(data_2d[key_exp].time[0], data_2d[key_exp].vel[0][2], linewidth=dh.lw, color='k')
+        plots_pos_z, = ax[idx_pos_z].plot(data_2d[key_exp].time[0], data_2d[key_exp].pos[0][2], linewidth=dh.lw, color='k')
+
+        plots_twist_y_d, = ax[idx_vel_y].plot(data_2d[key_exp].time[0], data_2d[key_exp].vel_d[0][1], linewidth=dh.lw-1, color='k')
+        plots_pos_y_d, = ax[idx_pos_y].plot(data_2d[key_exp].time[0], data_2d[key_exp].pos_d[0][1], linewidth=dh.lw-1, color='k')
+        plots_twist_z_d, = ax[idx_vel_z].plot(data_2d[key_exp].time[0], data_2d[key_exp].vel_d[0][2], linewidth=dh.lw-1, color='k')
+        plots_pos_z_d, = ax[idx_pos_z].plot(data_2d[key_exp].time[0], data_2d[key_exp].pos_d[0][2], linewidth=dh.lw-1, color='k')
+
+        # plots_pos_ball, = ax[idx_pos_z].plot(data_2d[key_exp].time_f[0], data_2d[key_exp].z_actual_hat[0], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$z_b$')
+        # plots_twist_ball, = ax[idx_vel_z].plot(data_2d[key_exp].time_f[0], data_2d[key_exp].z_dot_actual_hat[0], color='b', linestyle='dashdot', linewidth=lw-0.5, label='$\dot{z}_b$')
+
+        # labels=['$\overline{\\boldsymbol{F}}_{VM-IC}$']
+        # ax[0].legend(labels=labels, borderaxespad=0.1, handlelength=0.8, fontsize=LEGEND_SIZE)
+
+        # labels=['$\\boldsymbol{K}_{VM-IC}$']
+        # ax[1].legend(labels=labels, borderaxespad=0.1, handlelength=0.8, fontsize=LEGEND_SIZE, loc='lower right')
+
+        # labels=['$\dot{\\boldsymbol{x}}_{d}$', '$\overline{\dot{\\boldsymbol{x}}}_{VM-IC}$']
+        # ax[2].legend(labels=labels, borderaxespad=0.1, handlelength=0.8, fontsize=LEGEND_SIZE, loc='lower right')
+
+        # labels=['$\\boldsymbol{x}_{d}$', '$\overline{\\boldsymbol{x}}_{VM-IC}$']
+        # ax[3].legend(labels=labels, borderaxespad=0.1, handlelength=0.8, fontsize=LEGEND_SIZE)
+
+
+        STEP = 5
+        N_POINTS = 1500
+        # if plot_now == 'const':
+        #     STEP = 1
+
+        n_frames = int((N_POINTS)/STEP)
+        print("n_frames = ", n_frames)
+        # print("video duration = +-", n_frames/FPS)
+
+        animation_1 = animation.FuncAnimation(plt.gcf(), animate_video, interval=1, repeat=False, frames=n_frames)
+
+        ### visualization
+        # plt.show()
+
+        video_name = 'video_'+key_exp+'.mp4'
+        ### creating and saving the video
+        writervideo = animation.FFMpegWriter(fps=30)
+        animation_1.save('images/' + video_name, writer=writervideo)
         # plt.show()
 
 if __name__=='__main__':
@@ -4068,9 +4281,10 @@ if __name__=='__main__':
     # plot_zoom_forces()
     # plot_zoom_forces_single_plot()  # T-RO
     # plot_zoom_position_single_plot()  # T-RO
-    plot_best_2d()  # T-RO
+    # data = plot_best_2d()  # T-RO
+    # generate_videos_2d(data)
     # plot_rmm_1d_all_in_one_4_plots()
-    # plot_rmm_1d_1_plot()
+    plot_rmm_1d_1_plot()
     # plot_rmm_1d_1_plot_with_without_dim() # T-RO
     #   # T-RO
     # plot_1d_increased_height()  # T-RO

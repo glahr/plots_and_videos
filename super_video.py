@@ -65,7 +65,7 @@ for i in [1, 2, 3]:
     params['data_to_plot'] = 'FT_ati'
     # FT_ati = dh.get_data(params, axis=Z_AXIS
     # fts.append(dh.get_data(params, axis=Z_AXIS))
-    fts[:,i-1] = dh.get_data(params, axis=Z_AXIS)
+    fts[:,i-1] = -dh.get_data(params, axis=Z_AXIS)
 
 
 params['color'] = 'Blue'
@@ -94,7 +94,7 @@ for i in [1, 2, 3]:
     params['data_to_plot'] = 'FT_ati'
     # FT_ati = dh.get_data(params, axis=Z_AXIS
     # fts_vic.append(dh.get_data(params, axis=Z_AXIS))
-    fts_vic[:,i-1] = dh.get_data(params, axis=Z_AXIS)
+    fts_vic[:,i-1] = -dh.get_data(params, axis=Z_AXIS)
 
 FT = np.mean(fts, axis=1)
 FT_vic = np.mean(fts_vic, axis=1)
@@ -130,28 +130,29 @@ params['data_to_plot'] = 'time'
 time_em = dh.get_data(params, axis=0)
 time_em = time_em - time_em[0]
 params['data_to_plot'] = 'FT_ati'
-ft_emp = dh.get_data(params, axis=Z_AXIS, file_name=file_name)
+ft_emp = -dh.get_data(params, axis=Z_AXIS, file_name=file_name)
 # params['data_to_plot'] = 'EE_twist_d'
 # ee_d_emp = dh.get_data(params, axis=Z_AXIS)
 
 # CONST IMP
+end_idx = 190
 file_name = path_folder + 'const-imp.mat'
 idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start', file_name=file_name)
-idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end', file_name=file_name)
+idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end', file_name=file_name)-end_idx
 params['i_initial'] = idx_start
 params['i_final'] = idx_end
 params['data_to_plot'] = 'time'
 time_const_imp = dh.get_data(params, axis=0, file_name=file_name)
 time_const_imp = time_const_imp - time_const_imp[0]
 params['data_to_plot'] = 'FT_ati'
-ft_const_imp = dh.get_data(params, axis=Z_AXIS, file_name=file_name)
+ft_const_imp = -dh.get_data(params, axis=Z_AXIS, file_name=file_name)
 ft_const_imp_tail = np.ones(N_POINTS-len(ft_const_imp))*ft_const_imp[-1]
 # params['data_to_plot'] = 'EE_twist_d'
 # ee_d_emp = dh.get_data(params, axis=Z_AXIS)
 
 # ---------------------- plot
 xlim_plot = [time[0], 1000/1000]#N_POINTS/1000]
-ylim_plot = [-3.5, 32]
+ylim_plot = [-32, 3.5]
 ylabel = '$\\boldsymbol{F}~[N]$'    
 # xlabel = '$\\boldsymbol{t}~[s]$'
 xlabel = ''
@@ -159,9 +160,9 @@ xlabel = ''
 # xtickslabels = ['$0$', '$0.1$', '$0.2$', '$0.3$','$0.4$', '$0.5$']#, '$0.75$', '$1.0$']
 xticks = []
 xtickslabels = []
-yticks = [0, 10, 20, 30]
-ytickslabels = ['$0$', '$10$', '$20$', '$30$']
-fig_size = [8, 8]  # width, height
+yticks = [-30, -20, -10, 0]
+ytickslabels = ['$-30$', '$-20$', '$-10$', '$0$']
+fig_size = [5, 8]  # width, height
 
 n_subplots=4
 fig, ax = plt.subplots(n_subplots,figsize=fig_size)#, constrained_layout=True)
@@ -417,7 +418,7 @@ EE_twist_empty = dh.get_data(params, Z_AXIS, file_name)
 
 file_name = path_folder + 'const-imp.mat'
 idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start', file_name=file_name)
-idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end', file_name=file_name)
+idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end', file_name=file_name)-end_idx
 params['i_initial'] = idx_start
 params['i_final'] = idx_end
 params['data_to_plot'] = 'time'
@@ -436,8 +437,8 @@ xticks = [] #     [0, 0.25, 0.5, 0.75, 1.0]
 xtickslabels = [] #['$0$', '$0.25$', '$0.5$', '$0.75$', '$1.0$']
 # xticks =      [0, 0.1, 0.2, 0.3, 0.4, 0.5]#, 0.75, 1.0]
 # xtickslabels = ['$0$', '$0.1$', '$0.2$', '$0.3$','$0.4$', '$0.5$']#, '$0.75$', '$1.0$']
-yticks = None #[-1, -0.5, 0.0]
-ytickslabels = None # ['$-1$', '$-0.5$', '$0$']
+yticks = [-1, -0.5, 0.0]
+ytickslabels = ['$-1$', '$-0.5$', '$0$']
 # fig_size = [8, 5]  # width, height
 
 # n_subplots=2
@@ -560,7 +561,7 @@ EE_position_d = dh.get_data(params, Z_AXIS, file_name)
 
 file_name = path_folder + 'const-imp.mat'
 idx_start = dh.get_idx_from_file(params, data_info, idx_name='idx_start', file_name=file_name)
-idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end', file_name=file_name)
+idx_end = dh.get_idx_from_file(params, data_info, idx_name='idx_end', file_name=file_name)-end_idx
 params['i_initial'] = idx_start
 params['i_final'] = idx_end
 params['data_to_plot'] = 'time'
@@ -577,8 +578,8 @@ ylabel = '$\\boldsymbol{x}~[m]$'
 xlabel = '$\\boldsymbol{t}~[s]$'
 xticks =      [0, 0.25, 0.5, 0.75, 1.0]
 xtickslabels = ['$0$', '$0.25$', '$0.5$', '$0.75$', '$1.0$']
-yticks = None # [0, 0.2, 0.4, 0.6]
-ytickslabels = None #['$0$', '$0.2$', '$0.4$', '$0.6$']
+yticks = [0, 0.25, 0.5]
+ytickslabels = ['$0$', '$0.25$', '$0.5$']
 # fig_size = [8, 3]  # width, height
 
 fig, ax[3] = dh.set_axis(fig=fig, ax=ax[3], xlim_plot=xlim_plot, xlabel=xlabel, xticks=xticks, xtickslabels=xtickslabels,
@@ -614,6 +615,8 @@ fig.subplots_adjust(hspace=0.05)
 # plt.show()
 # fig.savefig('comparison_twist_position.pdf', bbox_inches='tight', pad_inches=0, dpi=300)
 
+for ax_ in ax:
+    ax_.grid()
 
 # plt.show()
 
@@ -690,7 +693,7 @@ def animate(j):
 
 ########### PLOT CONFIG ##############
 idx_start = 0
-plot_now = 'all'
+plot_now = 'const'
 
 if plot_now == 'vm':
     plots_force, = ax[0].plot(time[0], FT[0], linewidth=dh.lw, color='#1f77b4')
@@ -815,3 +818,4 @@ video_name = 'video_'+plot_now+'.mp4'
 ### creating and saving the video
 writervideo = animation.FFMpegWriter(fps=50)
 animation_1.save(path_folder + video_name, writer=writervideo)
+# plt.show()

@@ -27,6 +27,7 @@ class DataClass:
         self.q_dot = None
         self.tau_norm = None
         self.tau_d_norm = None
+        self.tau_m_norm = None
         self.tau_rms = None
         self.tau_d_rms = None
         self.w_fd = None

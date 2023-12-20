@@ -61,8 +61,10 @@ class DataPlotHelper:
             f = h5py.File(os.getcwd()+'/'+file_name, 'r')
         else:
             f = h5py.File(file_name, 'r')
-
-        return np.array(f.get(params['data_to_plot']))[params['i_initial']:params['i_final'], axis]
+        if params['data_to_plot'] == 'q' or params['data_to_plot'] == 'dq' or params['data_to_plot'] == 'tau_measured':
+            return np.array(f.get(params['data_to_plot']))[params['i_initial']:params['i_final']]
+        else:
+            return np.array(f.get(params['data_to_plot']))[params['i_initial']:params['i_final'], axis]
     
     def plot_data(self, data, show=True):
         plt.plot(data)
@@ -88,16 +90,14 @@ class DataPlotHelper:
             elif 'const-imp' in file_name:
                 idx = data_info.loc[(data_info['experiment_name'] == 'const_imp'), idx_name].values
             else:
-                print("ERROR IN GETTING IDX")
-                return 0
+                idx = data_info.loc[(data_info['experiment_name'] == file_name), idx_name].values
         return idx[0]
     
     def set_axis(self, ax=None, fig=None, xlim_plot=None, xlabel=None, xticks=None, xtickslabels=None,
                                 ylim_plot=None, ylabel=None, yticks=None, ytickslabels=None,
                                 fig_size=[10,10], n_subplots=1):
-        
         if ax is None or fig is None:
-            fig, ax = plt.subplots(n_subplots,figsize=fig_size)
+            fig, ax = plt.subplots(n_subplots,figsize=fig_size, sharex=True)
         
         if xlabel is not None:
             ax.set_xlabel(xlabel, size=self.f_size)
@@ -125,16 +125,19 @@ class DataPlotHelper:
         if ytickslabels is not None:
             ax.set_yticklabels(ytickslabels)
 
-        ax.grid(which='major', alpha=0.2, linestyle='--')
+        # ax.grid(which='major', alpha=0.2, linestyle='--')
 
         fig.tight_layout()
         return fig, ax
     
-    def plot_single(self, time, data, fig=None, ax=None, shape='', color=None, lw=3):
+    def plot_single(self, time, data, fig=None, ax=None, shape='', color=None, lw=None, label=None):
         if '--' in shape:
             lw = self.lw - 0.5
         else:
-            lw = self.lw
-        ax.plot(time, data, shape, color=color, linewidth=lw)
+            if lw is None:
+                lw = self.lw
+            else:
+                lw = lw
+        ax.plot(time, data, shape, color=color, linewidth=lw, label=label)
         return fig, ax
 

@@ -23,6 +23,7 @@ def PEI(pos, pos_d):
     error = np.abs(pos_d - pos)
     return np.max(error)
 
+
 def DRI(ft, exp=''):
     if exp == 'opt_kmp':
         i1 = 100
@@ -36,7 +37,8 @@ def DRI(ft, exp=''):
     if exp == 'const-imp':
         i1 = 104
         i2 = 183
-    delta = np.log10(ft[i1]/ft[i2])
+    wb = 0.494*9.81
+    delta = np.log((ft[i1]-wb)/(ft[i2]-wb))
     dri = 1/(np.sqrt(1+(2*np.pi/delta)**2))
     return dri
 
@@ -388,7 +390,6 @@ params['data_to_plot'] = 'EE_twist'
 EE_twist_const_imp = dh.get_data(params, Z_AXIS, file_name)
 
 # ---------------------- POWER
-
 power = np.multiply(EE_twist, FT)
 power_vic = np.multiply(EE_twist_vic, FT_vic)
 power_empty = np.multiply(EE_twist_empty, FT_empty)

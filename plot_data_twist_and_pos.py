@@ -118,7 +118,7 @@ params['data_to_plot'] = 'time'
 time_const_imp = dh.get_data(params, axis=0, file_name=file_name)
 time_const_imp = time_const_imp - time_const_imp[0]
 params['data_to_plot'] = 'EE_twist'
-EE_const_imp = dh.get_data(params, Z_AXIS, file_name)
+EE_const_imp = dh.get_data(params, Z_AXIS, file_name)[:-190]
 EE_const_imp_tail = np.ones(N_POINTS-len(EE_const_imp))*EE_const_imp[-1]
 
 xlim_plot = [time[0], 1000/1000]#N_POINTS/1000]
@@ -132,7 +132,7 @@ xtickslabels = [] #['$0$', '$0.25$', '$0.5$', '$0.75$', '$1.0$']
 # xtickslabels = ['$0$', '$0.1$', '$0.2$', '$0.3$','$0.4$', '$0.5$']#, '$0.75$', '$1.0$']
 yticks = None #[-1, -0.5, 0.0]
 ytickslabels = None # ['$-1$', '$-0.5$', '$0$']
-fig_size = [8, 5]  # width, height
+fig_size = [8, 6]  # width, height
 
 n_subplots=2
 fig, ax = plt.subplots(n_subplots,figsize=fig_size)#, constrained_layout=True)
@@ -153,7 +153,7 @@ fig, ax[0] = dh.plot_single(time=time[:len(EE_const_imp)][-1], data=EE_const_imp
 ax[0].text(x=0.59, y=0.48, s='F')
 ax[0].text(x=0.068, y=.48, s='D')
 # ax.axvline(x = 0.168, linestyle='--', color = 'k', label = 'axvline - full height')
-ax[0].axvspan(0.08, .12, facecolor='b', alpha=0.1, label='_nolegend_')
+ax[0].axvspan(0.08, .109, facecolor='b', alpha=0.1, label='_nolegend_')
 # fig, ax = dh.plot_single(time=time_vic, data=EE_twist_d_vic, fig=fig, ax=ax, color_shape='g--')
 # ax.text(x=0.018, y=0.15, s='P-C')
 # ax.text(x=0.17, y=0.15, s='A-C')
@@ -268,7 +268,7 @@ params['data_to_plot'] = 'time'
 time_const_imp = dh.get_data(params, axis=0, file_name=file_name)
 time_const_imp = time_const_imp - time_const_imp[0]
 params['data_to_plot'] = 'EE_position'
-EE_const_imp = dh.get_data(params, Z_AXIS, file_name)
+EE_const_imp = dh.get_data(params, Z_AXIS, file_name)[:-190]
 EE_const_imp_tail = np.ones(N_POINTS-len(EE_const_imp))*EE_const_imp[-1]
 
 xlim_plot = [time[0], time[-1]]
@@ -280,7 +280,7 @@ xticks =      [0, 0.25, 0.5, 0.75, 1.0]
 xtickslabels = ['$0$', '$0.25$', '$0.5$', '$0.75$', '$1.0$']
 yticks = None # [0, 0.2, 0.4, 0.6]
 ytickslabels = None #['$0$', '$0.2$', '$0.4$', '$0.6$']
-fig_size = [8, 3]  # width, height
+# fig_size = [8, 3]  # width, height
 
 fig, ax[1] = dh.set_axis(fig=fig, ax=ax[1], xlim_plot=xlim_plot, xlabel=xlabel, xticks=xticks, xtickslabels=xtickslabels,
                       ylim_plot=ylim_plot, ylabel=ylabel, yticks=yticks, ytickslabels=ytickslabels,
@@ -298,9 +298,9 @@ fig, ax[1] = dh.plot_single(time=time[:len(EE_const_imp)][-1], data=EE_const_imp
 # ax.text(x=0.05, y=25, s='D')
 ax[1].axvline(x = 0.6, ymin=0, ymax=2.07, linestyle='-', linewidth=2, color = 'k', label = 'axvline - full height', clip_on=False)
 # ax[1].text(x=0.59, y=0.625, s='F')
-ax[1].axvspan(0.08, .12, facecolor='b', alpha=0.1, label='_nolegend_')
+ax[1].axvspan(0.08, .109, facecolor='b', alpha=0.1, label='_nolegend_')
 ax[1].axvline(x = 0.08, ymin=0, ymax=2.07, linestyle='-', linewidth=2, color = 'k', label = 'axvline - full height', clip_on=False)
-ax[1].axvline(x = 0.168, ymin=0, ymax=2.07, linestyle='--', linewidth=1, color = 'k', label = 'axvline - full height', clip_on=False)
+ax[1].axvline(x = 0.14, ymin=0, ymax=2.07, linestyle='--', linewidth=1, color = 'k', label = 'axvline - full height', clip_on=False)
 # ax[1].text(x=0.065, y=.625, s='D')
 # fig, ax = dh.plot_single(time=time_vic, data=EE_twist_d_vic, fig=fig, ax=ax, color_shape='g--')
 
@@ -309,7 +309,34 @@ labels=['$\\boldsymbol{x}_{FP-IC}$', '$\overline{\\boldsymbol{x}}_{VM-IC}$', '$\
 ax[1].legend(labels=labels, borderaxespad=0.1,
           handlelength=0.8, fontsize=LEGEND_SIZE)
 fig.subplots_adjust(hspace=0.08)
-ax[0].plot(0.168, -1, 'ko', markersize=6, alpha=1.0)
-ax[1].plot(0.168, 0.41672, 'ko', markersize=6, alpha=1.0)
+ax[0].plot(0.14, -1, 'ko', markersize=6, alpha=1.0)
+ax[1].plot(0.14, 0.45672, 'ko', markersize=6, alpha=1.0)
+
+
+
+alpha_grids = 0.12
+y_grids_pos = [0, 0.2, 0.4, 0.6]
+y_grids_vel = [-1.0, -0.5, 0.0]
+xticks = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
+idx_vel = 0
+idx_pos = 1
+
+fontsize_labels = 15
+for j, e in enumerate(ax):
+    [e.axvline(xg, color='k', alpha=alpha_grids) for xg in xticks]
+    e.set_xticks(xticks)
+    e.set_xticklabels(['$'+str(xt)+'$' for xt in xticks], fontsize=fontsize_labels)
+    if idx_pos == j:
+        [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_pos]
+        e.set_yticks(y_grids_pos)
+        e.set_yticklabels(['$'+str(a)+'$' for a in y_grids_pos], size=fontsize_labels)
+        ax[idx_vel].set_xticks([])
+    if idx_vel == j:
+        [e.axhline(yg, color='k', alpha=alpha_grids) for yg in y_grids_vel]
+        e.set_yticks(y_grids_vel)
+        e.set_yticklabels(['$'+str(a)+'$' for a in y_grids_vel], size=fontsize_labels)
+fig.align_ylabels()
 plt.show()
-# fig.savefig('comparison_twist_position.pdf', bbox_inches='tight', pad_inches=0, dpi=300)
+fig.savefig('comparison_twist_position.pdf', pad_inches=0, dpi=300)
+fig.savefig('comparison_twist_position.png', pad_inches=0, dpi=300)

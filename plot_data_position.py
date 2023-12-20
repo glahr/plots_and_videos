@@ -215,6 +215,6 @@ ax.text(x=0.065, y=.625, s='D')
 labels=['$x_{FPIC}$', '$\overline{x}_{VM}$', '$\overline{x}_{VM+VIC}$', '$x_{d}$']
 ax.legend(labels=labels, borderaxespad=0.1,
           handlelength=0.8, fontsize=LEGEND_SIZE)
-
-# plt.show()
-fig.savefig('comparison_position_average.png', bbox_inches='tight', pad_inches=0, dpi=300)
+print(EE_position_d[:3])
+plt.show()
+# fig.savefig('comparison_position_average.png', bbox_inches='tight', pad_inches=0, dpi=300)
